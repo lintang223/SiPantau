@@ -6,3 +6,9 @@ __pycache__/
 node_modules/
 .env
 sipantau-lengkap/sipantau-frontend/node_modules/
+sipantau-lengkap/sipantau-frontend/.next/
+chrome_profile/
+*.db
+*.sqlite
+*.sql
+*.log
