@@ -1,0 +1,31 @@
+{
+  "toko": [],
+  "kata_kunci": [
+    "ivory asli",
+    "gading original",
+    "taring asli",
+    "sisik original",
+    "cula asli",
+    "tempurung original",
+    "paruh asli",
+    "empedu asli",
+    "kulit harimau asli",
+    "bahan organik langka",
+    "material eksotis premium",
+    "koleksi satwa",
+    "from alam liar",
+    "tangkapan langsung"
+  ],
+  "pola_deskripsi": [
+    "pori.pori terlihat",
+    "serat (alami|natural) terlihat",
+    "aroma khas (material|bahan|asli)",
+    "berat \\d+ gram.*(tulang|gading|taring|sisik|cula)",
+    "(asli|original).*(satwa|wildlife|liar)",
+    "bukan (replika|tiruan|imitasi)",
+    "langsung dari (alam|hutan|pemburu)",
+    "warisan (leluhur|nenek moyang)",
+    "koleksi (pribadi|langka) dijual",
+    "(tersedia|stok) terbatas.*(asli|original)"
+  ]
+}

@@ -1,0 +1,4 @@
+Building SiPantau_Agent.exe ...
+
+BUILD BERHASIL: dist/SiPantau_Agent.exe
+Copy ke ..\sipantau-frontend\public\downloads\SiPantau_Agent.exe

@@ -1,0 +1,35 @@
+# ══════════════════════════════════════════════════════════════════
+#  PROXY LIST — Tokopedia Scraper
+#  Format yang didukung:
+#    http://host:port
+#    http://user:pass@host:port
+#    https://user:pass@host:port
+#    socks5://user:pass@host:port
+#
+#  Aturan:
+#  - Satu proxy per baris
+#  - Baris yang diawali # diabaikan (komentar)
+#  - Baris kosong diabaikan
+#  - Jika file ini kosong → scraper berjalan tanpa proxy (mode direct)
+#
+#  Rekomendasi provider proxy residensial (lebih susah di-detect):
+#  - Bright Data  : brightdata.com
+#  - Oxylabs      : oxylabs.io
+#  - Smartproxy   : smartproxy.com
+#  - IPRoyal      : iproyal.com
+#  - Webshare     : webshare.io (ada free tier)
+#
+#  Tips:
+#  - Gunakan proxy Indonesia (ID) agar behavior lebih natural
+#  - Proxy residensial >> datacenter untuk hindari block Tokopedia
+#  - Minimal 3-5 proxy untuk rotasi efektif
+# ══════════════════════════════════════════════════════════════════
+
+# ── Contoh format (hapus # di depan dan isi dengan proxy asli) ──
+# http://103.152.112.120:80
+# http://username:password@gate.smartproxy.com:7000
+# socks5://username:password@proxy.brightdata.com:22225
+# https://user:pass@id.oxylabs.io:10000
+
+# ── Tambahkan proxy kamu di bawah ini ──
+http://103.65.237.92:5678
