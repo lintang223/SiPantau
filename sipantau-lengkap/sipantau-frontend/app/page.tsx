@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Eye, EyeOff, AlertTriangle, LogIn } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -125,16 +126,16 @@ export default function LoginPage() {
               <div className="input-wrap">
                 <input className="login-input" type={showPass ? 'text' : 'password'} placeholder="Password"
                   value={password} onChange={e => setPassword(e.target.value)} required />
-                <button type="button" className="toggle-pw" onClick={() => setShowPass(!showPass)} tabIndex={-1}>
-                  {showPass ? '👁‍🗨' : '👁'}
-                </button>
+                  <button type="button" className="pw-toggle" onClick={() => setShowPass(!showPass)} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {showPass ? <EyeOff size={16} color="#9ca3af" /> : <Eye size={16} color="#9ca3af" />}
+                  </button>
               </div>
             </div>
 
-            {error && <div className="error-box"><span>⚠️</span><span>{error}</span></div>}
+            {error && <div className="error-box" style={{ display: "flex", alignItems: "center", gap: ".5rem" }}><span><AlertTriangle size={18} /></span><span>{error}</span></div>}
 
-            <button type="submit" className="btn-login" disabled={loading}>
-              {loading ? '⏳ Memverifikasi...' : 'Masuk'}
+            <button type="submit" className="btn-login" disabled={loading} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".5rem" }}>
+              {loading ? 'Memverifikasi...' : <><LogIn size={18} /> Masuk</>}
             </button>
           </form>
 

@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar'
+import { AlertTriangle, CheckCircle, Save } from 'lucide-react'
 
 export default function GantiPasswordPage() {
   const router = useRouter()
-  const [user, setUser] = useState<{ username: string; nama: string; role: string } | null>(null)
+  const [user, setUser] = useState<{ username: string; nama: string } | null>(null)
   const [passwordLama, setPasswordLama] = useState('')
   const [passwordBaru, setPasswordBaru] = useState('')
   const [passwordKonfirmasi, setPasswordKonfirmasi] = useState('')
@@ -96,11 +97,11 @@ export default function GantiPasswordPage() {
                 value={passwordKonfirmasi} onChange={e => setPasswordKonfirmasi(e.target.value)} required />
             </div>
 
-            {error   && <div className="gp-error">⚠️ {error}</div>}
-            {success && <div className="gp-success">✅ {success}</div>}
+            {error   && <div className="gp-error" style={{ display: "flex", alignItems: "center", gap: ".4rem" }}><AlertTriangle size={15} /> {error}</div>}
+            {success && <div className="gp-success" style={{ display: "flex", alignItems: "center", gap: ".4rem" }}><CheckCircle size={15} /> {success}</div>}
 
-            <button type="submit" className="gp-btn" disabled={loading}>
-              {loading ? '⏳ Menyimpan...' : '🔐 Simpan Password Baru'}
+            <button type="submit" className="gp-btn" disabled={loading} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}>
+              {loading ? 'Menyimpan...' : <><Save size={16} /> Simpan Password Baru</>}
             </button>
           </form>
         </div>

@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
+import { Settings, Activity, ClipboardList, AlertTriangle, CheckCircle, Search, FolderOpen, Trash2, Download } from "lucide-react";
 
 type Produk = {
   nama: string;
@@ -334,30 +335,29 @@ export default function ScrapingPage() {
       <div className="wrap">
 
         <div className="phead">
-          <div className="bc">SiPantau / <span>Pemantauan</span></div>
-          <h1>Pemantauan Marketplace</h1>
-          <p>Pantau listing produk dari Tokopedia, Shopee, dan Lazada secara otomatis</p>
+          <div className="bc">Sipantau / <span>Pemantauan</span></div>
+          <h1>Pemantauan Market Place</h1>
+          <p>Pantau Listing Produk Dari Tokopedia, shopee dan Lazada secara Otomatis</p>
         </div>
 
         {/* ─── Banner: Agent tidak berjalan ─── */}
         {!agentActive && platforms.tokopedia && (
-          <div style={{ background: "#FEF3C7", color: "#92400E", padding: "1.4rem", borderRadius: "12px", marginBottom: "1.2rem", border: "1.5px solid #FCD34D" }}>
-            <strong style={{ fontSize: "1.05rem", display: "block", marginBottom: ".6rem" }}>⚠️ Aplikasi Agent Belum Berjalan</strong>
-            <p style={{ margin: "0 0 1rem", fontSize: ".9rem", lineHeight: 1.6 }}>
-              Untuk scraping Tokopedia, perlu aplikasi kecil yang berjalan di komputer Anda.
-              Caranya sangat mudah — cukup <b>satu klik</b>:
+          <div className="warn-card">
+            <div className="warn-card-title">⚠️ Aplikasi Agent Belum Berjalan</div>
+            <p className="warn-card-desc">
+              Untuk Scrapping Tokopedia. Perlu Aplikasi Kecil Yang Berjalan di Komputer Anda - Cukup 1 Klik.
             </p>
-            <div style={{ background: "rgba(255,255,255,0.6)", padding: "1rem", borderRadius: "8px", marginBottom: "1rem", fontSize: ".9rem", lineHeight: 2 }}>
-              <div>1️⃣ &nbsp; Klik tombol <b>Download Agent</b> di bawah ini</div>
-              <div>2️⃣ &nbsp; Buka file yang terdownload → <b>klik 2x</b> file <code>SiPantau_Agent.exe</code></div>
-              <div>3️⃣ &nbsp; Tunggu beberapa menit — browser akan <b>terbuka sendiri</b> ✅</div>
+            <div className="warn-card-steps">
+              <div>1️⃣&nbsp; Klik tombol download AGENT di bawah ini.</div>
+              <div>2️⃣&nbsp; Buka file yang ter download → klik 2x SiPantau_Agent.exe</div>
+              <div>3️⃣&nbsp; Tunggu beberapa menit - browser akan tebuka sendiri</div>
             </div>
             <a
               href="/downloads/SiPantau_Agent.exe"
               download
-              style={{ display: "inline-block", textDecoration: "none", padding: ".6rem 1.4rem", background: "#D97706", color: "white", borderRadius: "8px", fontWeight: 700, fontSize: ".95rem" }}
+              className="btn-download"
             >
-              ⬇️ Download Aplikasi Agent (.exe)
+              ⬇ Download Aplikasi Agent (.exe)
             </a>
           </div>
         )}
@@ -384,7 +384,7 @@ export default function ScrapingPage() {
 
         <div className="card" style={{ marginBottom: ".85rem" }}>
           <div className="card-head">
-            <h2>⚙️ Parameter Pemantauan</h2>
+            <h2 style={{ display: "flex", alignItems: "center", gap: ".5rem" }}><Settings size={20} /> Parameter Pemantauan</h2>
             {done && (
               <span style={{ fontSize: ".7rem", color: "var(--green-mid)", fontWeight: 600 }}>
                 ✓ Selesai — {results.length} listing
@@ -393,34 +393,34 @@ export default function ScrapingPage() {
           </div>
           <div className="card-body">
             <form onSubmit={handleScrape}>
-              <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: ".85rem", marginBottom: ".85rem" }}>
-                <div className="fgroup">
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1.25rem", marginBottom: "1rem", alignItems: "start" }}>
+                <div className="fgroup" style={{ display: "flex", flexDirection: "column" }}>
                   <label>Kata Kunci Pencarian</label>
                   <input className="finput" value={keyword}
                     onChange={e => setKeyword(e.target.value)}
                     placeholder="Contoh: kayu jati, gading, sisik trenggiling..."
                     required autoFocus />
                 </div>
-                <div className="fgroup">
-                  <label>Target Produk Baru per Sesi</label>
+                <div className="fgroup" style={{ display: "flex", flexDirection: "column" }}>
+                  <label>Load More (Tokopedia)</label>
                   <select className="finput" value={targetCount} onChange={e => setTargetCount(e.target.value)}>
-                    {[10, 20, 30, 50].map(n => <option key={n} value={n}>{n} produk</option>)}
+                    {[10, 20, 30, 50].map(n => <option key={n} value={n}>{n}x Klik</option>)}
                   </select>
-                  <small style={{ color: "var(--ink3)", fontSize: ".7rem", marginTop: ".3rem", display: "block" }}>
-                    Sesi berikutnya lanjut dari produk yang belum pernah di-scraping.
+                  <small style={{ color: "var(--ink3)", fontSize: ".7rem", marginTop: ".3rem", lineHeight: 1.4 }}>
+                    Sesi berikutnya lanjut dari produk yang belum pernah di-scrap.
                   </small>
                 </div>
-                <div className="fgroup">
-                  <label>Harga Minimum yang Di-scrape</label>
-                  <div style={{ display: "flex", alignItems: "center" }}>
-                    <span style={{ padding: "0.5rem", background: "var(--border)", border: "1px solid var(--border-mid)", borderRadius: "4px 0 0 4px", fontSize: ".85rem", color: "var(--ink2)", whiteSpace: "nowrap" }}>Rp</span>
+                <div className="fgroup" style={{ display: "flex", flexDirection: "column" }}>
+                  <label>Ambang Batas Harga (Threshold)</label>
+                  <div style={{ display: "flex", alignItems: "stretch" }}>
+                    <span style={{ padding: "0 0.85rem", display: "flex", alignItems: "center", background: "var(--surface2)", border: "1.5px solid var(--border)", borderRight: "none", borderRadius: "6px 0 0 6px", fontSize: ".85rem", color: "var(--ink2)", fontWeight: 600 }}>Rp</span>
                     <input type="number" className="finput" value={hargaThreshold}
                       onChange={e => setHargaThreshold(e.target.value)}
-                      style={{ borderRadius: "0 4px 4px 0", borderLeft: "none" }}
+                      style={{ borderRadius: "0 6px 6px 0", flex: 1 }}
                       min={0} step={50000} />
                   </div>
-                  <small style={{ color: "var(--ink3)", fontSize: ".7rem", marginTop: ".3rem", display: "block" }}>
-                    Produk di bawah harga ini akan di-skip. ≥ Rp1jt otomatis dilabeli <b>Mahal</b>.
+                  <small style={{ color: "var(--ink3)", fontSize: ".7rem", marginTop: ".3rem", lineHeight: 1.4 }}>
+                    Produk di bawah harga ini akan di-skip. &ge; Rp1jt dilabeli <b>Mahal</b>.
                   </small>
                 </div>
               </div>
@@ -448,10 +448,10 @@ export default function ScrapingPage() {
                 title={agentActive && !browserReady ? browserMessage : ""}
               >
                 {loading
-                  ? "⏳ Sedang memantau..."
-                  : agentActive && !browserReady
-                  ? "⏳ Menyiapkan browser..."
-                  : "🔎 Mulai Pemantauan"}
+                    ? <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}><Search size={16} className="animate-spin" /> Sedang memantau...</span>
+                    : agentActive && !browserReady
+                    ? <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}><Search size={16} className="animate-spin" /> Menyiapkan browser...</span>
+                    : <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}><Search size={16} /> Mulai Pemantauan</span>}
               </button>
               {(done || results.length > 0) && !loading && (
                 <>
@@ -467,14 +467,14 @@ export default function ScrapingPage() {
                     }}
                     style={{ marginLeft: ".75rem", padding: ".55rem 1rem", border: "1px solid var(--green)", borderRadius: 6, background: "var(--green-pale)", cursor: "pointer", fontSize: ".85rem", color: "var(--green)", fontWeight: 600 }}
                   >
-                    📁 Buka Folder Hasil (Screenshot)
+                    <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}><FolderOpen size={16} /> Buka Folder Hasil (Screenshot)</span>
                   </button>
                   <button
                     type="button"
                     onClick={handleReset}
                     style={{ marginLeft: ".75rem", padding: ".55rem 1rem", border: "1px solid var(--border-mid)", borderRadius: 6, background: "transparent", cursor: "pointer", fontSize: ".85rem", color: "var(--ink2)" }}
                   >
-                    🗑️ Bersihkan
+                    <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}><Trash2 size={16} /> Bersihkan</span>
                   </button>
                 </>
               )}
@@ -485,7 +485,7 @@ export default function ScrapingPage() {
         {(loading || done) && (
           <div className="card" style={{ marginBottom: ".85rem" }}>
             <div className="card-head">
-              <h2>📡 Progress Pemantauan</h2>
+              <h2 style={{ display: "flex", alignItems: "center", gap: ".5rem" }}><Activity size={20} /> Progress Pemantauan</h2>
               {loading && (
                 <span style={{ display: "inline-flex", alignItems: "center", gap: ".4rem", fontSize: ".7rem", color: "var(--green-mid)", fontWeight: 600 }}>
                   <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--green-vivid)", animation: "pulse-nav 1.5s ease-in-out infinite", flexShrink: 0, display: "inline-block" }} />
@@ -520,7 +520,7 @@ export default function ScrapingPage() {
         {results.length > 0 && (
           <div className="card">
             <div className="card-head">
-              <h2>📋 Hasil Pemantauan</h2>
+              <h2 style={{ display: "flex", alignItems: "center", gap: ".5rem" }}><ClipboardList size={20} /> Hasil Pemantauan</h2>
               <div style={{ display: "flex", alignItems: "center", gap: ".5rem" }}>
                 <span style={{ fontSize: ".72rem", fontWeight: 700, padding: ".2rem .65rem", borderRadius: 99, background: "var(--green-light)", color: "var(--green)", border: "1px solid var(--border-mid)" }}>
                   {results.length} listing
@@ -531,7 +531,7 @@ export default function ScrapingPage() {
                     className="btn-sm"
                     style={{ display: "inline-flex", alignItems: "center", gap: ".3rem", textDecoration: "none" }}
                   >
-                    ⬇ Unduh Excel (Server)
+                    <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}><Download size={14} /> Unduh Excel (Server)</span>
                   </a>
                 )}
                 {agentJobId && done && (
@@ -541,7 +541,7 @@ export default function ScrapingPage() {
                     style={{ display: "inline-flex", alignItems: "center", gap: ".3rem", textDecoration: "none", background: "var(--green)", color: "white", border: "1px solid var(--green)" }}
                     target="_blank" rel="noopener noreferrer"
                   >
-                    ⬇ Unduh Excel (Lokal Agent)
+                    <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}><Download size={14} /> Unduh Excel (Lokal Agent)</span>
                   </a>
                 )}
               </div>

@@ -4,11 +4,22 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
+import { CheckCircle, AlertTriangle, Plug, Server, RefreshCw } from "lucide-react";
 
 export default function PengaturanPage() {
   const router = useRouter();
   useEffect(() => {
-    if (!sessionStorage.getItem("sipantau_auth")) router.push("/");
+    if (!sessionStorage.getItem("sipantau_auth")) {
+      router.push("/");
+      return;
+    }
+    const userStr = sessionStorage.getItem("sipantau_user");
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      if (user.divisi !== "superadmin" && user.divisi !== "sekdit") {
+        router.push("/akses-ditolak");
+      }
+    }
   }, [router]);
 
   const [apiUrl, setApiUrl]       = useState("http://localhost:8000");
@@ -23,7 +34,7 @@ export default function PengaturanPage() {
       const data = await res.json();
       if (data.status === "ok") {
         setStatus("ok");
-        setStatusTxt(`Terhubung ✓  —  ${data.app ?? "SiPantau Backend"} v${data.versi ?? "1.0"}`);
+        setStatusTxt(<>Terhubung <CheckCircle size={14} style={{ display: "inline", verticalAlign: "middle", marginLeft: 4 }} /> — {data.app ?? "SiPantau Backend"} v{data.versi ?? "1.0"}</>);
       } else {
         throw new Error();
       }
@@ -42,7 +53,7 @@ export default function PengaturanPage() {
       <div className="wrap">
 
         <div className="phead">
-          <div className="bc">SiPantau / <span>Pengaturan</span></div>
+          <div className="bc">Sipantau / <span>Pengaturan</span></div>
           <h1>Pengaturan</h1>
           <p>Konfigurasi koneksi backend dan preferensi sistem</p>
         </div>
@@ -50,7 +61,7 @@ export default function PengaturanPage() {
         {/* Koneksi card */}
         <div className="card" style={{ marginBottom: ".85rem" }}>
           <div className="card-head">
-            <h2>🔌 Koneksi API Backend</h2>
+            <h2 style={{ display: "flex", alignItems: "center", gap: ".5rem" }}><Plug size={20} /> Koneksi API Backend</h2>
             {status === "ok" && (
               <span style={{
                 display: "inline-flex", alignItems: "center", gap: ".4rem",
@@ -81,7 +92,10 @@ export default function PengaturanPage() {
                 disabled={status === "checking"}
                 style={{ flexShrink: 0, minWidth: 140 }}
               >
-                {status === "checking" ? "⏳ Mengecek..." : "🔌 Cek Koneksi"}
+                <span style={{ display: "flex", alignItems: "center", gap: ".4rem" }}>
+                  {status === "checking" ? <RefreshCw size={14} className="animate-spin" /> : <Plug size={14} />}
+                  {status === "checking" ? "Mengecek..." : "Cek Koneksi"}
+                </span>
               </button>
             </div>
 
@@ -104,26 +118,11 @@ export default function PengaturanPage() {
             )}
 
             {/* Info box */}
-            <div style={{
-              marginTop: "1.25rem",
-              padding: "1rem 1.1rem",
-              background: "var(--green-pale)",
-              borderRadius: "var(--r-sm)",
-              border: "1px solid var(--border)",
-            }}>
-              <div style={{ fontSize: ".78rem", fontWeight: 700, color: "var(--ink2)", marginBottom: ".6rem" }}>
-                📋 Cara Menjalankan Backend
-              </div>
-              <div style={{ fontSize: ".78rem", color: "var(--ink3)", lineHeight: 1.9 }}>
+            <div className="info-card">
+              <div className="info-card-title" style={{ display: "flex", alignItems: "center", gap: ".4rem" }}><Server size={18} /> Cara Menjalankan Backend</div>
+              <div className="info-card-body">
                 <div>1. Buka terminal di folder project</div>
-                <div style={{
-                  background: "#0b1a0e", color: "#4ade80",
-                  fontFamily: "DM Mono, monospace", fontSize: ".75rem",
-                  padding: ".5rem .85rem", borderRadius: "var(--r-sm)",
-                  margin: ".35rem 0",
-                }}>
-                  $ python main.py
-                </div>
+                <code className="code-block">$ python main.py</code>
                 <div>2. Backend akan berjalan di <code style={{ fontFamily: "DM Mono, monospace", background: "var(--green-light)", padding: "1px 6px", borderRadius: 4, fontSize: ".75rem" }}>http://localhost:8000</code></div>
                 <div>3. Klik <strong>Cek Koneksi</strong> untuk memverifikasi</div>
               </div>
@@ -138,23 +137,18 @@ export default function PengaturanPage() {
             <h2>ℹ️ Informasi Sistem</h2>
           </div>
           <div className="card-body">
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: ".65rem" }}>
+            <div className="sys-grid">
               {[
-                { lbl: "Aplikasi",    val: "SiPantau" },
-                { lbl: "Versi",       val: "1.0.0" },
-                { lbl: "Instansi",    val: "KLHK RI" },
-                { lbl: "Framework",   val: "Next.js 14" },
-                { lbl: "Platform",    val: "Tokopedia · Shopee · Lazada" },
-                { lbl: "Tahun",       val: "2025" },
-              ].map(({ lbl, val }) => (
-                <div key={lbl} style={{
-                  padding: ".7rem .9rem",
-                  background: "var(--green-pale)",
-                  borderRadius: "var(--r-sm)",
-                  border: "1px solid var(--border)",
-                }}>
-                  <div style={{ fontSize: ".67rem", color: "var(--ink4)", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".4px", marginBottom: ".25rem" }}>{lbl}</div>
-                  <div style={{ fontSize: ".84rem", fontWeight: 600, color: "var(--ink2)" }}>{val}</div>
+                { lbl: "Aplikasi",  val: "SiPantau",               cls: "green"  },
+                { lbl: "Versi",     val: "1.0.0",                   cls: "blue"   },
+                { lbl: "Instansi",  val: "KLHK RI",                 cls: "green"  },
+                { lbl: "Framework", val: "Next.js 14",              cls: "purple" },
+                { lbl: "Platform",  val: "Tokopedia · Shopee · Lazada", cls: "orange" },
+                { lbl: "Tahun",     val: "2025",                    cls: "blue"   },
+              ].map(({ lbl, val, cls }) => (
+                <div key={lbl} className={`sys-badge ${cls}`}>
+                  <div className="sys-badge-lbl">{lbl}</div>
+                  <div className="sys-badge-val">{val}</div>
                 </div>
               ))}
             </div>
