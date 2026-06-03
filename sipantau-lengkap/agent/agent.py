@@ -170,6 +170,7 @@ _event_loop: Optional[asyncio.AbstractEventLoop] = None
 # ══════════════════════════════════════════
 class StartScrapeRequest(BaseModel):
     keyword:     str
+    platform:    str    = "tokopedia"
     max_pages:   int    = 3
     target_product_count: int = 50  # jumlah produk BARU per sesi (max 50)
     harga_threshold: int = 350000
@@ -227,6 +228,7 @@ async def start_scrape(req: StartScrapeRequest):
     jobs[job_id] = {
         "status":      "queued",
         "keyword":     req.keyword.strip(),
+        "platform":    req.platform.lower(),
         "max_pages":   req.max_pages,
         "target_product_count": req.target_product_count,
         "harga_threshold": req.harga_threshold,
@@ -332,6 +334,40 @@ def list_jobs():
     ]
     return {"jobs": list(reversed(job_list))}
 
+@app.get("/shopee-session")
+def get_shopee_session_status():
+    """Cek status session Shopee tersimpan."""
+    try:
+        from scraper.session_manager import load_shopee_session, SESSION_FILE
+        import json, os
+        has_file = os.path.exists(SESSION_FILE)
+        cookies  = load_shopee_session() if has_file else []
+        saved_at = ""
+        if has_file and cookies:
+            try:
+                with open(SESSION_FILE, "r") as f:
+                    saved_at = json.load(f).get("saved_at", "")
+            except Exception:
+                pass
+        return {
+            "has_session"  : bool(cookies),
+            "cookie_count" : len(cookies),
+            "saved_at"     : saved_at,
+            "session_file" : SESSION_FILE,
+        }
+    except ImportError:
+        return {"has_session": False, "cookie_count": 0, "saved_at": "", "error": "session_manager tidak tersedia"}
+
+@app.delete("/shopee-session")
+def clear_shopee_session_endpoint():
+    """Hapus session Shopee tersimpan (paksa login ulang)."""
+    try:
+        from scraper.session_manager import clear_shopee_session
+        clear_shopee_session()
+        return {"success": True, "message": "Session Shopee berhasil dihapus."}
+    except ImportError:
+        raise HTTPException(status_code=500, detail="session_manager tidak tersedia")
+
 # ══════════════════════════════════════════
 #  SCRAPING ENGINE
 # ══════════════════════════════════════════
@@ -348,15 +384,26 @@ async def _run_scrape_job(job_id: str):
     # Set env vars agar scraper.config membacanya dengan benar
     os.environ["SCRAPER_SCROLL"]    = str(job["target_product_count"])
     os.environ["SCRAPER_THRESHOLD"] = str(job["harga_threshold"])
+    os.environ["SCRAPER_PLATFORM"]  = job.get("platform", "tokopedia")
 
     # Import modul scraper yang sudah di-embed
     from scraper.config       import PAGE_TIMEOUT, MAX_CONCURRENT_TABS, RESTART_EVERY, COOLDOWN_ON_HANG
     from scraper.browser_manager import AdaptiveRateLimit, create_context
-    from scraper.scraper_core import scrape_all_pages, scrape_product_detail, _apply_stealth
+    from scraper.scraper_core import (
+        scrape_all_pages, scrape_all_pages_shopee, 
+        scrape_product_detail, _apply_stealth
+    )
     from scraper.excel_writer  import save_report
     from scraper.utils         import human_delay, ProgressTracker, backup_append, notify_expensive
     from scraper.proxy_manager import ProxyManager
     from playwright.async_api  import async_playwright
+    try:
+        from scraper.session_manager import (
+            load_shopee_session, capture_shopee_session, save_shopee_session
+        )
+        _sess_ok = True
+    except ImportError:
+        _sess_ok = False
 
     proxy_mgr = ProxyManager()
     rate_rl   = AdaptiveRateLimit()
@@ -415,6 +462,15 @@ async def _run_scrape_job(job_id: str):
                 context = browser.contexts[0]
                 page    = await context.new_page()
                 page.set_default_timeout(PAGE_TIMEOUT * 1000)
+                # ── Inject Shopee session ke CDP context (bypass create_context) ──
+                if job.get("platform") == "shopee" and _sess_ok:
+                    cookies = load_shopee_session()
+                    if cookies:
+                        try:
+                            await context.add_cookies(cookies)
+                            print(f"[Agent] 🍪 {len(cookies)} cookie Shopee di-inject ke CDP context")
+                        except Exception as _ce:
+                            print(f"[Agent] ⚠️  Gagal inject cookie: {_ce}")
             else:
                 context, page = await create_context(browser, proxy=await proxy_mgr.get_valid_proxy())
 
@@ -423,17 +479,28 @@ async def _run_scrape_job(job_id: str):
             all_products  = []
 
             keyword = job["keyword"]
-            print(f"\n{'═'*60}\n🔍 Keyword: '{keyword}'\n{'═'*60}")
-            job["message"] = f"Membuka Tokopedia untuk '{keyword}'..."
+            platform = job.get("platform", "tokopedia")
+            print(f"\n{'═'*60}\n🔍 Keyword: '{keyword}' ({platform.upper()})\n{'═'*60}")
+            job["message"] = f"Membuka {platform.capitalize()} untuk '{keyword}'..."
 
-            scrape_products, context, page = await scrape_all_pages(
-                page, keyword,
-                browser=browser,
-                context_ref=context_ref,
-                is_cdp=is_cdp,
-                target_product_count=job["target_product_count"],
-                harga_threshold=job.get("harga_threshold", 0),
-            )
+            if platform == "shopee":
+                scrape_products, context, page = await scrape_all_pages_shopee(
+                    page, keyword,
+                    browser=browser,
+                    context_ref=context_ref,
+                    is_cdp=is_cdp,
+                    target_product_count=job["target_product_count"],
+                    harga_threshold=job.get("harga_threshold", 0),
+                )
+            else:
+                scrape_products, context, page = await scrape_all_pages(
+                    page, keyword,
+                    browser=browser,
+                    context_ref=context_ref,
+                    is_cdp=is_cdp,
+                    target_product_count=job["target_product_count"],
+                    harga_threshold=job.get("harga_threshold", 0),
+                )
 
             if not scrape_products:
                 job["message"] = "Tidak ada produk ditemukan."
@@ -506,6 +573,15 @@ async def _run_scrape_job(job_id: str):
                         except Exception:
                             pass
                         await asyncio.sleep(cooldown_eff)
+                        # ── Re-inject Shopee session setelah clear_cookies ──
+                        if job.get("platform") == "shopee" and _sess_ok:
+                            cookies = load_shopee_session()
+                            if cookies:
+                                try:
+                                    await context_ref[0].add_cookies(cookies)
+                                    print(f"[Agent] 🍪 Re-inject {len(cookies)} cookie Shopee setelah clear")
+                                except Exception:
+                                    pass
                         try:
                             page = await context_ref[0].new_page()
                         except Exception:
@@ -580,7 +656,7 @@ async def _run_scrape_job(job_id: str):
             mapped.append({
                 "nama_produk":  p.get("title", "N/A"),
                 "harga":        harga_int,
-                "platform":     "Tokopedia",
+                "platform":     job.get("platform", "tokopedia").capitalize(),
                 "rating":       rating_f,
                 "terjual":      p.get("sold", "N/A"),
                 "url_produk":   p.get("link", ""),
@@ -601,7 +677,7 @@ async def _run_scrape_job(job_id: str):
             job["message"] = f"Mengirim {len(mapped)} produk ke server..."
             upload_status = _upload_results(
                 job["backend_url"], mapped, keyword, session_id,
-                job["username"], job["harga_threshold"]
+                job["username"], job["harga_threshold"], job.get("platform", "tokopedia")
             )
         elif not mapped:
             upload_status = "skip_empty"
@@ -644,7 +720,7 @@ def _create_excel(results: list, keyword: str, session_id: str, harga_threshold:
         ws.title = "Data Scraping"
 
         ws.merge_cells("A1:J1")
-        ws["A1"] = "SiPantau — Hasil Scraping Tokopedia"
+        ws["A1"] = "SiPantau — Hasil Scraping"
         ws["A1"].font = Font(bold=True, size=13, color="FFFFFF")
         ws["A1"].fill = PatternFill("solid", fgColor="1B4332")
         ws["A1"].alignment = Alignment(horizontal="center", vertical="center")
@@ -696,7 +772,7 @@ def _create_excel(results: list, keyword: str, session_id: str, harga_threshold:
         return ""
 
 
-def _upload_results(backend_url: str, results: list, keyword: str, session_id: str, username: str, harga_threshold: int = 350000) -> str:
+def _upload_results(backend_url: str, results: list, keyword: str, session_id: str, username: str, harga_threshold: int = 350000, platform: str = "tokopedia") -> str:
     """Upload hasil scraping ke backend SiPantau. Return 'ok' | 'error'."""
     MAX_RETRY = 3
     for attempt in range(1, MAX_RETRY + 1):
@@ -706,7 +782,7 @@ def _upload_results(backend_url: str, results: list, keyword: str, session_id: s
                 "session_id":     session_id,
                 "keyword":        keyword,
                 "username":       username,
-                "platforms":      ["tokopedia"],
+                "platforms":      [platform.lower()],
                 "results":        results,
                 "harga_threshold": harga_threshold,
             }
