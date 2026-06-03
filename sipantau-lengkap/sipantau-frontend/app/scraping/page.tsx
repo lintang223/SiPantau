@@ -44,6 +44,9 @@ export default function ScrapingPage() {
   const [browserReady, setBrowserReady] = useState(false);
   const [browserMessage, setBrowserMessage] = useState("Memeriksa browser...");
   const [pollIntervalId, setPollIntervalId] = useState<NodeJS.Timeout | null>(null);
+  const [shopeeSession, setShopeeSession] = useState<{
+    has_session: boolean; cookie_count: number; saved_at: string;
+  } | null>(null);
   const logRef                    = useRef<HTMLDivElement>(null);
   const pollRef                   = useRef<NodeJS.Timeout | null>(null); // agar bisa diakses dari restore
 
@@ -99,6 +102,29 @@ export default function ScrapingPage() {
     const intv = setInterval(checkAgent, 3000);
     return () => clearInterval(intv);
   }, []);
+
+  // ── Cek session Shopee dari agent ──────────────────────────────────────────
+  useEffect(() => {
+    if (!agentActive || !platforms.shopee) { setShopeeSession(null); return; }
+    const checkSession = async () => {
+      try {
+        const res = await fetch('http://localhost:7777/shopee-session');
+        if (res.ok) setShopeeSession(await res.json());
+      } catch { setShopeeSession(null); }
+    };
+    checkSession();
+    const intv = setInterval(checkSession, 10000);
+    return () => clearInterval(intv);
+  }, [agentActive, platforms.shopee]);
+
+  const handleClearShopeeSession = async () => {
+    if (!confirm('Hapus session Shopee? Anda perlu login ulang di scraping berikutnya.')) return;
+    try {
+      await fetch('http://localhost:7777/shopee-session', { method: 'DELETE' });
+      setShopeeSession({ has_session: false, cookie_count: 0, saved_at: '' });
+      addLog('🗑️ Session Shopee dihapus. Login ulang diperlukan.', 'warn');
+    } catch { alert('Gagal terhubung ke Agent.'); }
+  };
 
   function addLog(msg: string, type: "ok" | "info" | "warn" = "ok") {
     const time = new Date().toLocaleTimeString("id-ID");
@@ -182,103 +208,103 @@ export default function ScrapingPage() {
     addLog("Memulai sesi pemantauan...", "info");
     addLog(`Kata kunci: "${keyword}" — ${selected.join(", ")}`, "info");
 
-    if (platforms.tokopedia && agentActive) {
-      // Alur Local Agent (Tokopedia)
-      try {
-        const res = await fetch("http://localhost:7777/scrape", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            keyword,
-            max_pages: parseInt(pages),
-            target_product_count: parseInt(targetCount),
-            harga_threshold: parseInt(hargaThreshold),
-            username,
-            backend_url: API_URL
-          }),
-        });
-        if (!res.ok) {
-          const errData = await res.json();
-          throw new Error(errData.detail || "Gagal memulai agent");
-        }
-        
-        const data = await res.json();
-        const jobId = data.job_id;
-        setAgentJobId(jobId);
-        addLog(`Agent mulai bekerja (Job ID: ${jobId.split('_')[1]})`, "ok");
+    if (agentActive) {
+      // Alur Local Agent (Bisa untuk Tokopedia, Shopee, Lazada)
+      let allResults: Produk[] = [];
 
-        // Mulai polling
-        const intv = setInterval(async () => {
-          try {
-            const statusRes = await fetch(`http://localhost:7777/status/${jobId}`);
-            if (!statusRes.ok) return;
-            const statusData = await statusRes.json();
-            
-            // Update progress & log message
-            setProg(prev => ({ ...prev, tokopedia: Math.min(statusData.total * 5, 95) }));
-            
-            // Add unique log message to prevent spam
-            setLog(prev => {
-              const lastMsg = prev[prev.length - 1];
-              if (!lastMsg?.includes(statusData.message)) {
-                 return [...prev, `info||[${new Date().toLocaleTimeString("id-ID")}] ${statusData.message}`];
-              }
-              return prev;
-            });
-
-            if (statusData.status === "done" || statusData.status === "error") {
-              clearInterval(intv);
-              setPollIntervalId(null);
-              
-              if (statusData.status === "error") {
-                addLog(`❌ Agent error: ${statusData.message}`, "warn");
-                setLoading(false);
-                return;
-              }
-
-              // Jika selesai, ambil resultnya
-              setProg(prev => ({ ...prev, tokopedia: 100 }));
-              const resultRes = await fetch(`http://localhost:7777/results/${jobId}`);
-              const resultData = await resultRes.json();
-              
-              addLog(`✅ Selesai — ${resultData.total} produk ditemukan`, "ok");
-              
-              // Pesan status upload
-              if (resultData.upload_status === "ok") {
-                addLog("📤 Data berhasil dikirim ke server & tersimpan di database.", "ok");
-              } else if (resultData.upload_status === "error") {
-                addLog("⚠️ Gagal kirim ke server — tetapi data SUDAH tersimpan di file Excel lokal (folder output/ di samping Agent.exe).", "warn");
-              }
-
-              if (resultData.file_excel) {
-                addLog(`📁 File Excel tersimpan: ${resultData.file_excel}`, "info");
-              }
-              
-              const mapped: Produk[] = (resultData.results || []).map((r: Record<string, unknown>) => ({
-                nama:     r.nama_produk  as string,
-                harga:    r.harga        as number,
-                platform: r.platform     as string,
-                rating:   r.rating       as number,
-                terjual:  r.terjual      as string,
-                url:      r.url_produk   as string,
-                waktu:    r.waktu_scrape as string,
-              }));
-
-              setResults(mapped);
-              setDone(true);
-              setLoading(false);
-            }
-          } catch (e) {
-            console.error("Polling error", e);
+      for (const plat of selected) {
+        try {
+          addLog(`[${plat.toUpperCase()}] Memulai Agent...`, "info");
+          const res = await fetch("http://localhost:7777/scrape", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              keyword,
+              platform: plat,
+              max_pages: parseInt(pages),
+              target_product_count: parseInt(targetCount),
+              harga_threshold: parseInt(hargaThreshold),
+              username,
+              backend_url: API_URL
+            }),
+          });
+          if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.detail || `Gagal memulai agent untuk ${plat}`);
           }
-        }, 3000);
-        
-        setPollIntervalId(intv);
+          
+          const data = await res.json();
+          const jobId = data.job_id;
+          setAgentJobId(jobId);
+          addLog(`[${plat.toUpperCase()}] Agent mulai bekerja (Job ID: ${jobId.split('_')[1]})`, "ok");
 
-      } catch (err: any) {
-        addLog(`❌ Error Agent: ${err.message}`, "warn");
-        setLoading(false);
+          let isDone = false;
+          while (!isDone) {
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            try {
+              const statusRes = await fetch(`http://localhost:7777/status/${jobId}`);
+              if (!statusRes.ok) continue;
+              const statusData = await statusRes.json();
+              
+              setProg(prev => ({ ...prev, [plat]: Math.min(statusData.total * 5, 95) }));
+              
+              setLog(prev => {
+                const lastMsg = prev[prev.length - 1];
+                if (!lastMsg?.includes(statusData.message)) {
+                   return [...prev, `info||[${new Date().toLocaleTimeString("id-ID")}] [${plat.toUpperCase()}] ${statusData.message}`];
+                }
+                return prev;
+              });
+
+              if (statusData.status === "done" || statusData.status === "error") {
+                isDone = true;
+                setAgentJobId("");
+                
+                if (statusData.status === "error") {
+                  addLog(`❌ Agent error (${plat}): ${statusData.message}`, "warn");
+                  continue; // Lanjut ke platform berikutnya
+                }
+
+                setProg(prev => ({ ...prev, [plat]: 100 }));
+                const resultRes = await fetch(`http://localhost:7777/results/${jobId}`);
+                const resultData = await resultRes.json();
+                
+                addLog(`✅ Selesai ${plat.toUpperCase()} — ${resultData.total} produk ditemukan`, "ok");
+                
+                if (resultData.upload_status === "ok") {
+                  addLog(`[${plat.toUpperCase()}] 📤 Data berhasil dikirim ke server.`, "ok");
+                } else if (resultData.upload_status === "error") {
+                  addLog(`[${plat.toUpperCase()}] ⚠️ Gagal kirim ke server (tersimpan di lokal).`, "warn");
+                }
+
+                if (resultData.file_excel) {
+                  addLog(`📁 File Excel lokal: ${resultData.file_excel}`, "info");
+                  setFileExcel(resultData.file_excel);
+                }
+                
+                const mapped: Produk[] = (resultData.results || []).map((r: Record<string, unknown>) => ({
+                  nama:     r.nama_produk  as string,
+                  harga:    r.harga        as number,
+                  platform: (r.platform as string) || plat.toUpperCase(),
+                  rating:   r.rating       as number,
+                  terjual:  r.terjual      as string,
+                  url:      r.url_produk   as string,
+                  waktu:    r.waktu_scrape as string,
+                }));
+
+                allResults = [...allResults, ...mapped];
+                setResults(allResults);
+              }
+            } catch (e) {
+              console.error("Polling error", e);
+            }
+          }
+        } catch (err: any) {
+          addLog(`❌ Error Agent (${plat}): ${err.message}`, "warn");
+        }
       }
+      setDone(true);
+      setLoading(false);
     } else {
       // Alur Fallback Backend (Shopee, Lazada, atau Tokopedia jika agent mati)
       try {
@@ -380,6 +406,45 @@ export default function ScrapingPage() {
             <span style={{ fontSize: "1.3rem" }}>✅</span>
             <span><b>Agent aktif dan browser siap.</b> Anda bisa memulai pemantauan.</span>
           </div>
+        )}
+
+        {/* ─── Banner: Status Session Shopee ─── */}
+        {agentActive && platforms.shopee && (
+          shopeeSession?.has_session ? (
+            <div style={{ background: "#FFF7ED", color: "#92400E", padding: ".8rem 1.2rem", borderRadius: "10px", marginBottom: "1.2rem", border: "1.5px solid #FCD34D", display: "flex", alignItems: "center", gap: ".8rem", fontSize: ".88rem", flexWrap: "wrap" }}>
+              <span style={{ fontSize: "1.3rem" }}>🍪</span>
+              <div style={{ flex: 1 }}>
+                <b>Session Shopee aktif</b> — {shopeeSession.cookie_count} cookie tersimpan
+                {shopeeSession.saved_at && (
+                  <span style={{ marginLeft: ".5rem", opacity: .7, fontSize: ".8rem" }}>
+                    (disimpan: {new Date(shopeeSession.saved_at).toLocaleString("id-ID")})
+                  </span>
+                )}
+                <div style={{ fontSize: ".78rem", marginTop: ".2rem", opacity: .75 }}>
+                  Login otomatis akan digunakan. Session valid ±18 jam.
+                </div>
+              </div>
+              <button
+                onClick={handleClearShopeeSession}
+                style={{ padding: ".35rem .8rem", border: "1px solid #D97706", borderRadius: 6, background: "transparent", cursor: "pointer", fontSize: ".8rem", color: "#92400E", fontWeight: 600, whiteSpace: "nowrap" }}
+              >🗑️ Hapus Session</button>
+            </div>
+          ) : (
+            <div style={{ background: "#FEF2F2", color: "#991B1B", padding: ".85rem 1.2rem", borderRadius: "10px", marginBottom: "1.2rem", border: "1.5px solid #FCA5A5", fontSize: ".88rem" }}>
+              <div style={{ fontWeight: 700, marginBottom: ".35rem" }}>⚠️ Belum ada session Shopee tersimpan</div>
+              <div style={{ opacity: .85, lineHeight: 1.6 }}>
+                Shopee memerlukan login untuk scraping. Jika terkena <i>login wall</i>, scraper akan berhenti.
+                <br />
+                <b>Solusi:</b> Jalankan perintah berikut di komputer tempat Agent berjalan, lalu login di browser:
+              </div>
+              <code style={{ display: "block", marginTop: ".5rem", background: "#FEE2E2", padding: ".4rem .7rem", borderRadius: 6, fontSize: ".8rem", fontFamily: "monospace", color: "#7F1D1D" }}>
+                .\env_klhk\Scripts\python.exe shopee_login.py
+              </code>
+              <div style={{ fontSize: ".75rem", marginTop: ".35rem", opacity: .7 }}>
+                Setelah login, session akan tersimpan otomatis dan dipakai di sini.
+              </div>
+            </div>
+          )
         )}
 
         <div className="card" style={{ marginBottom: ".85rem" }}>
