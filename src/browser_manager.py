@@ -4,11 +4,21 @@ import re
 from config import PAGE_TIMEOUT, USER_AGENTS, VIEWPORTS, USE_ADAPTIVE_RL, BLOCK_PATTERNS
 
 try:
-    from playwright_stealth import stealth_async
+    from session_manager import apply_shopee_session, load_shopee_session
+    _SESSION_MGR_AVAILABLE = True
+except ImportError:
+    _SESSION_MGR_AVAILABLE = False
+
+try:
+    from playwright_stealth import stealth
     _STEALTH_AVAILABLE = True
 except ImportError:
-    _STEALTH_AVAILABLE = False
-    print("   ⚠️  playwright-stealth tidak ditemukan. Jalankan: pip install playwright-stealth")
+    try:
+        from playwright_stealth import stealth_async as stealth
+        _STEALTH_AVAILABLE = True
+    except ImportError:
+        _STEALTH_AVAILABLE = False
+        print("   [!] playwright-stealth tidak ditemukan. Jalankan: pip install playwright-stealth")
 
 # ══════════════════════════════════════════
 #  ADAPTIVE RATE LIMITER
@@ -40,7 +50,7 @@ class AdaptiveRateLimit:
 # ══════════════════════════════════════════
 #  BROWSER CONTEXT
 # ══════════════════════════════════════════
-async def create_context(browser, proxy: dict = None):
+async def create_context(browser, proxy: dict = None, inject_shopee_session: bool = True):
     ua = random.choice(USER_AGENTS)
     vp = random.choice(VIEWPORTS)
     proxy_str = proxy.get("server", "direct") if proxy else "direct"
@@ -148,13 +158,23 @@ async def create_context(browser, proxy: dict = None):
         };
     """)
     
+    # ── Inject session Shopee (jika tersedia) ────────────────
+    if inject_shopee_session and _SESSION_MGR_AVAILABLE:
+        cookies = load_shopee_session()
+        if cookies:
+            try:
+                await context.add_cookies(cookies)
+                print(f"   🍪 {len(cookies)} cookie Shopee di-inject ke context")
+            except Exception as _ce:
+                print(f"   ⚠️  Gagal inject cookie Shopee: {_ce}")
+
     page = await context.new_page()
     page.set_default_timeout(PAGE_TIMEOUT * 1000)
     
     # Terapkan playwright-stealth jika tersedia (paling efektif)
     if _STEALTH_AVAILABLE:
-        await stealth_async(page)
-        print("   🥷 Stealth mode aktif")
+        await stealth(page)
+        print("   [stealth] Stealth mode aktif")
     
     # Apply resource blocker pada page ini
     await page.route("**/*", block_trackers)
@@ -183,8 +203,36 @@ async def is_blocked(page) -> bool:
             return True
         if any(k in url for k in ["cf-challenge","captcha","verify","blocked"]):
             return True
-        for sel in ["iframe[src*='captcha']", "#captcha", ".g-recaptcha"]:
+        # Shopee-specific: login wall & verify page
+        if "shopee.co.id/buyer/login" in url:
+            print("   ⛔ Shopee: Redirect ke halaman login terdeteksi")
+            return True
+        if "shopee.co.id/verify" in url:
+            print("   ⛔ Shopee: Halaman verifikasi terdeteksi")
+            return True
+        for sel in ["iframe[src*='captcha']", "#captcha", ".g-recaptcha",
+                    "div[class*='captcha']", "div[class*='verify']"]:
             if await page.query_selector(sel):
+                return True
+    except Exception:
+        pass
+    return False
+
+
+async def is_shopee_login_wall(page) -> bool:
+    """Cek secara spesifik apakah halaman adalah Shopee login wall."""
+    try:
+        url = page.url.lower()
+        if "shopee.co.id/buyer/login" in url or "shopee.co.id/verify" in url:
+            return True
+        # Cek via elemen: form login Shopee
+        login_el = await page.query_selector(
+            "input[name='loginKey'], input[type='password'], "
+            "div[class*='login'], form[class*='login']"
+        )
+        if login_el:
+            title = (await page.title()).lower()
+            if "login" in title or "masuk" in title or "sign in" in title:
                 return True
     except Exception:
         pass
