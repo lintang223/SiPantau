@@ -368,6 +368,101 @@ def clear_shopee_session_endpoint():
     except ImportError:
         raise HTTPException(status_code=500, detail="session_manager tidak tersedia")
 
+_login_in_progress = False
+
+async def _run_shopee_login_flow():
+    global _login_in_progress
+    if _login_in_progress:
+        return
+    _login_in_progress = True
+    print("[Agent] Memulai sesi login Shopee manual...")
+    try:
+        from playwright.async_api import async_playwright
+        from scraper.session_manager import save_shopee_session, clear_shopee_session, SESSION_FILE
+        
+        if os.path.exists(SESSION_FILE):
+            clear_shopee_session()
+
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(
+                headless=False,
+                args=[
+                    "--start-maximized",
+                    "--disable-blink-features=AutomationControlled",
+                    "--no-sandbox",
+                ],
+            )
+            context = await browser.new_context(
+                viewport={"width": 1366, "height": 768},
+                user_agent=(
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/124.0.0.0 Safari/537.36"
+                ),
+                locale="id-ID",
+                timezone_id="Asia/Jakarta",
+            )
+            await context.add_init_script("""
+                Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+                delete window.__playwright;
+            """)
+            page = await context.new_page()
+            try:
+                await page.goto("https://shopee.co.id/buyer/login", wait_until="domcontentloaded", timeout=30000)
+            except Exception as e:
+                print(f"[Agent] ❌ Gagal buka halaman login: {e}")
+                await browser.close()
+                return
+
+            print("[Agent] 👆 Silakan LOGIN di jendela Chrome yang terbuka. Timeout: 5 menit.")
+            
+            deadline = asyncio.get_event_loop().time() + 300
+            logged_in = False
+            while asyncio.get_event_loop().time() < deadline:
+                await asyncio.sleep(2)
+                current_url = page.url.lower()
+                if "buyer/login" not in current_url and "login" not in current_url and "shopee.co.id" in current_url:
+                    print("[Agent] ✅ Login berhasil terdeteksi!")
+                    logged_in = True
+                    break
+
+            if not logged_in:
+                print("[Agent] ⏰ Timeout login.")
+                await browser.close()
+                return
+
+            await asyncio.sleep(5)
+            try:
+                await page.goto("https://shopee.co.id", wait_until="domcontentloaded", timeout=20000)
+                await asyncio.sleep(3)
+            except Exception:
+                pass
+
+            all_cookies = await context.cookies()
+            shopee_cookies = [c for c in all_cookies if "shopee" in str(c.get("domain", "")).lower()]
+            await browser.close()
+
+            if shopee_cookies:
+                save_shopee_session(all_cookies)
+                print(f"[Agent] 🎉 {len(shopee_cookies)} cookie Shopee tersimpan.")
+            else:
+                print("[Agent] ❌ Tidak ada cookie Shopee ditemukan setelah login.")
+    except Exception as e:
+        print(f"[Agent] ❌ Error saat login flow: {e}")
+    finally:
+        _login_in_progress = False
+
+@app.post("/shopee-login")
+def start_shopee_login():
+    """Mulai proses login Shopee manual melalui browser."""
+    global _login_in_progress
+    if _login_in_progress:
+        return {"status": "in_progress", "message": "Proses login sudah berjalan. Silakan cek jendela Chrome."}
+    
+    # Jalankan di background (non-blocking)
+    asyncio.create_task(_run_shopee_login_flow())
+    return {"status": "started", "message": "Membuka browser... Silakan login di jendela Chrome yang terbuka."}
+
 # ══════════════════════════════════════════
 #  SCRAPING ENGINE
 # ══════════════════════════════════════════

@@ -44,6 +44,7 @@ export default function ScrapingPage() {
   const [browserReady, setBrowserReady] = useState(false);
   const [browserMessage, setBrowserMessage] = useState("Memeriksa browser...");
   const [pollIntervalId, setPollIntervalId] = useState<NodeJS.Timeout | null>(null);
+  const [isShopeeLoginLoading, setIsShopeeLoginLoading] = useState(false);
   const [shopeeSession, setShopeeSession] = useState<{
     has_session: boolean; cookie_count: number; saved_at: string;
   } | null>(null);
@@ -124,6 +125,23 @@ export default function ScrapingPage() {
       setShopeeSession({ has_session: false, cookie_count: 0, saved_at: '' });
       addLog('🗑️ Session Shopee dihapus. Login ulang diperlukan.', 'warn');
     } catch { alert('Gagal terhubung ke Agent.'); }
+  };
+
+  const handleStartShopeeLogin = async () => {
+    try {
+      setIsShopeeLoginLoading(true);
+      const res = await fetch('http://localhost:7777/shopee-login', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        addLog(`[SHOPEE LOGIN] ${data.message}`, 'info');
+      } else {
+        addLog(`[SHOPEE LOGIN ERROR] ${data.detail || data.message}`, 'warn');
+      }
+    } catch {
+      alert('Gagal memanggil Agent untuk login.');
+    } finally {
+      setTimeout(() => setIsShopeeLoginLoading(false), 2000);
+    }
   };
 
   function addLog(msg: string, type: "ok" | "info" | "warn" = "ok") {
@@ -435,14 +453,21 @@ export default function ScrapingPage() {
               <div style={{ opacity: .85, lineHeight: 1.6 }}>
                 Shopee memerlukan login untuk scraping. Jika terkena <i>login wall</i>, scraper akan berhenti.
                 <br />
-                <b>Solusi:</b> Jalankan perintah berikut di komputer tempat Agent berjalan, lalu login di browser:
+                <b>Solusi:</b> Klik tombol di bawah ini. Aplikasi Agent akan membuka browser khusus agar Anda bisa login. 
+                Setelah Anda login, session akan otomatis tersimpan dan digunakan untuk pemantauan.
               </div>
-              <code style={{ display: "block", marginTop: ".5rem", background: "#FEE2E2", padding: ".4rem .7rem", borderRadius: 6, fontSize: ".8rem", fontFamily: "monospace", color: "#7F1D1D" }}>
-                .\env_klhk\Scripts\python.exe shopee_login.py
-              </code>
-              <div style={{ fontSize: ".75rem", marginTop: ".35rem", opacity: .7 }}>
-                Setelah login, session akan tersimpan otomatis dan dipakai di sini.
-              </div>
+              <button
+                type="button"
+                onClick={handleStartShopeeLogin}
+                disabled={isShopeeLoginLoading}
+                style={{ marginTop: ".8rem", padding: ".5rem 1rem", border: "none", borderRadius: 6, background: "#B91C1C", color: "white", fontWeight: 600, cursor: isShopeeLoginLoading ? "not-allowed" : "pointer", fontSize: ".85rem", display: "inline-flex", alignItems: "center", gap: ".4rem" }}
+              >
+                {isShopeeLoginLoading ? (
+                  <><Search size={14} className="animate-spin" /> Membuka Browser...</>
+                ) : (
+                  <>🔑 Buka Browser Login Shopee</>
+                )}
+              </button>
             </div>
           )
         )}
