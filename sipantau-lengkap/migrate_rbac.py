@@ -7,7 +7,7 @@ Jalankan sekali: python migrate_rbac.py
 
 import psycopg2
 
-DB = dict(host='localhost', port=5050, dbname='sipantau', user='postgres', password='bola')
+DB = dict(host='localhost', port=5432, dbname='sipantau', user='postgres', password='SigmaMale123')
 conn = psycopg2.connect(**DB)
 cur = conn.cursor()
 

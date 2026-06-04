@@ -49,7 +49,7 @@ async def security_headers(request: Request, call_next):
     return response
 
 # ── DB Config ─────────────────────────────────────────────────────────────────
-DB_CONFIG = {"host": "localhost", "port": 5050, "dbname": "sipantau", "user": "postgres", "password": "bola"}
+DB_CONFIG = {"host": "localhost", "port": 5432, "dbname": "sipantau", "user": "postgres", "password": "SigmaMale123"}
 
 def get_conn():
     return psycopg2.connect(**DB_CONFIG)

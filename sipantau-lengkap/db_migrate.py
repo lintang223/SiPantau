@@ -5,7 +5,7 @@ Jalankan: python db_migrate.py
 """
 import psycopg2
 
-DB = dict(host='localhost', port=5050, dbname='sipantau', user='postgres', password='bola')
+DB = dict(host='localhost', port=5432, dbname='sipantau', user='postgres', password='SigmaMale123')
 
 print("=" * 55)
 print("  SiPantau — Database Migration (ERD Alignment)")

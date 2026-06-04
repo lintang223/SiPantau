@@ -52,6 +52,7 @@ pyinstaller ^
   --hidden-import "scraper.scraper_core" ^
   --hidden-import "scraper.excel_writer" ^
   --hidden-import "scraper.proxy_manager" ^
+  --hidden-import "scraper.session_manager" ^
   --collect-all "playwright_stealth" ^
   --collect-all "playwright" ^
   --noconfirm ^

@@ -384,29 +384,71 @@ async def _run_shopee_login_flow():
             clear_shopee_session()
 
         async with async_playwright() as p:
-            browser = await p.chromium.launch(
-                headless=False,
-                args=[
-                    "--start-maximized",
-                    "--disable-blink-features=AutomationControlled",
-                    "--no-sandbox",
-                ],
-            )
-            context = await browser.new_context(
-                viewport={"width": 1366, "height": 768},
-                user_agent=(
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36 (KHTML, like Gecko) "
-                    "Chrome/124.0.0.0 Safari/537.36"
-                ),
-                locale="id-ID",
-                timezone_id="Asia/Jakarta",
-            )
+            # Cari path real Chrome
+            chrome_path = None
+            for path in [
+                r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+                r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+                os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe")
+            ]:
+                if os.path.exists(path):
+                    chrome_path = path
+                    break
+            
+            import tempfile
+            user_data_dir = os.path.join(tempfile.gettempdir(), "sipantau_shopee_profile")
+            
+            if chrome_path:
+                print(f"[Agent] Menggunakan real Chrome di: {chrome_path}")
+                context = await p.chromium.launch_persistent_context(
+                    user_data_dir=user_data_dir,
+                    executable_path=chrome_path,
+                    headless=False,
+                    viewport={"width": 1366, "height": 768},
+                    ignore_default_args=["--enable-automation"],
+                    args=[
+                        "--start-maximized",
+                        "--disable-blink-features=AutomationControlled",
+                        "--no-sandbox",
+                    ],
+                )
+                browser = context # alias untuk penutupan di bawah
+                page = context.pages[0] if context.pages else await context.new_page()
+            else:
+                print("[Agent] Real Chrome tidak ditemukan, fallback ke Chromium bawaan.")
+                browser = await p.chromium.launch(
+                    headless=False,
+                    ignore_default_args=["--enable-automation"],
+                    args=[
+                        "--start-maximized",
+                        "--disable-blink-features=AutomationControlled",
+                        "--no-sandbox",
+                    ],
+                )
+                context = await browser.new_context(
+                    viewport={"width": 1366, "height": 768},
+                    user_agent=(
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                        "AppleWebKit/537.36 (KHTML, like Gecko) "
+                        "Chrome/124.0.0.0 Safari/537.36"
+                    ),
+                    locale="id-ID",
+                    timezone_id="Asia/Jakarta",
+                )
+                page = await context.new_page()
+
             await context.add_init_script("""
                 Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
                 delete window.__playwright;
             """)
-            page = await context.new_page()
+            
+            # Gunakan playwright-stealth untuk menghindari deteksi bot
+            try:
+                from playwright_stealth import stealth_async
+                await stealth_async(page)
+            except ImportError:
+                print("[Agent] playwright_stealth tidak ditemukan. Menggunakan mode standar.")
+
             try:
                 await page.goto("https://shopee.co.id/buyer/login", wait_until="domcontentloaded", timeout=30000)
             except Exception as e:
@@ -453,7 +495,7 @@ async def _run_shopee_login_flow():
         _login_in_progress = False
 
 @app.post("/shopee-login")
-def start_shopee_login():
+async def start_shopee_login():
     """Mulai proses login Shopee manual melalui browser."""
     global _login_in_progress
     if _login_in_progress:

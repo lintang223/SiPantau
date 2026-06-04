@@ -9,7 +9,7 @@ from config import (
     WAIT_DATA_TIMEOUT, MAX_DETAIL_RETRY, SPINNER_TIMEOUT, USE_PROXY, USE_JSON_BACKUP,
     SCREENSHOT_JPEG, LOG_FILE, SCREENSHOT_FOLDER, SCREENSHOT_MAHAL, RESTART_EVERY,
     COOLDOWN_ON_HANG, PAGE_TIMEOUT, MAX_CONCURRENT_TABS, USE_RETRY_QUEUE,
-    SUMMARY_FILE
+    SUMMARY_FILE, SCRAPER_PLATFORM
 )
 from utils import (
     load_keywords, checkpoint_load, checkpoint_save, checkpoint_clear,
@@ -18,7 +18,10 @@ from utils import (
 from proxy_manager import ProxyManager
 from browser_manager import AdaptiveRateLimit, create_context, safe_goto
 from excel_writer import save_report, save_summary
-from scraper_core import scrape_all_pages, scrape_product_detail, _apply_stealth
+from scraper_core import (
+    scrape_all_pages, scrape_all_pages_shopee, 
+    scrape_product_detail, _apply_stealth
+)
 
 # ══════════════════════════════════════════
 #  GRACEFUL SHUTDOWN
@@ -55,7 +58,8 @@ async def run_scraper():
         else "klik semua tombol + fallback pagination"
     )
     print(f"📋 {len(keywords)} keyword dimuat.")
-    print(f"⚙️  Mode         : {mode}")
+    print(f"⚙️  Platform     : {SCRAPER_PLATFORM.upper()}")
+    print(f"   Mode         : {mode}")
     print(f"   💰 Threshold  : Rp{HARGA_THRESHOLD:,}")
     print(f"   ✅ Min field  : {MIN_FIELDS_OK}/{TOTAL_FIELDS} (langsung screenshot)")
     print(f"   ⏳ Data timeout: {WAIT_DATA_TIMEOUT}s")
@@ -68,7 +72,7 @@ async def run_scraper():
     print()
 
     logger.info(
-        f"MULAI — {len(keywords)} keyword | threshold Rp{HARGA_THRESHOLD:,}"
+        f"MULAI — {len(keywords)} keyword | platform {SCRAPER_PLATFORM} | threshold Rp{HARGA_THRESHOLD:,}"
     )
 
     os.makedirs(SCREENSHOT_FOLDER, exist_ok=True)
@@ -123,9 +127,14 @@ async def run_scraper():
             print(f"🔍 Keyword: '{keyword}'")
             print(f"{'═'*62}")
 
-            products, context, page = await scrape_all_pages(
-                page, keyword, browser=browser, context_ref=context_ref, is_cdp=is_cdp
-            )
+            if SCRAPER_PLATFORM == "shopee":
+                products, context, page = await scrape_all_pages_shopee(
+                    page, keyword, browser=browser, context_ref=context_ref, is_cdp=is_cdp
+                )
+            else:
+                products, context, page = await scrape_all_pages(
+                    page, keyword, browser=browser, context_ref=context_ref, is_cdp=is_cdp
+                )
 
             if not products:
                 print(f"   ⚠️  Tidak ada produk, restart sesi...")

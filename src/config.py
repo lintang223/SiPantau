@@ -17,6 +17,7 @@ COOLDOWN_ON_HANG    = 25
 # --- Diambil dari run.bat ---
 MAX_LOAD_MORE       = int(os.environ.get("SCRAPER_SCROLL", 5))
 HARGA_THRESHOLD     = int(os.environ.get("SCRAPER_THRESHOLD", 350000))
+SCRAPER_PLATFORM    = os.environ.get("SCRAPER_PLATFORM", "tokopedia").lower()
 
 # Kurangi tab paralel: 3 tab = lebih natural, lebih sedikit terdeteksi
 # dibanding 5 tab yang agresif. Trade-off: ~40% lebih lambat tapi ~3x lebih tahan.

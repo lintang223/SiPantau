@@ -3,7 +3,7 @@ from PyInstaller.utils.hooks import collect_all
 
 datas = [('scraper', 'scraper')]
 binaries = []
-hiddenimports = ['playwright', 'playwright.async_api', 'fastapi', 'uvicorn', 'uvicorn.logging', 'uvicorn.loops', 'uvicorn.loops.auto', 'uvicorn.protocols', 'uvicorn.protocols.http', 'uvicorn.protocols.http.auto', 'uvicorn.lifespan', 'uvicorn.lifespan.on', 'starlette', 'openpyxl', 'requests', 'pydantic', 'pkg_resources', 'setuptools', 'scraper.config', 'scraper.utils', 'scraper.browser_manager', 'scraper.scraper_core', 'scraper.excel_writer', 'scraper.proxy_manager']
+hiddenimports = ['playwright', 'playwright.async_api', 'fastapi', 'uvicorn', 'uvicorn.logging', 'uvicorn.loops', 'uvicorn.loops.auto', 'uvicorn.protocols', 'uvicorn.protocols.http', 'uvicorn.protocols.http.auto', 'uvicorn.lifespan', 'uvicorn.lifespan.on', 'starlette', 'openpyxl', 'requests', 'pydantic', 'pkg_resources', 'setuptools', 'scraper.config', 'scraper.utils', 'scraper.browser_manager', 'scraper.scraper_core', 'scraper.excel_writer', 'scraper.proxy_manager', 'scraper.session_manager']
 tmp_ret = collect_all('playwright_stealth')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 tmp_ret = collect_all('playwright')
