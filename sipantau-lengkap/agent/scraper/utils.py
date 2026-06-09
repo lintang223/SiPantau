@@ -146,7 +146,8 @@ def format_price(raw: str) -> str:
     return raw
 
 def is_expensive(product: dict, threshold: int = 0) -> bool:
-    return extract_price_number(product.get("price", "0")) >= 1000000
+    effective_threshold = threshold if threshold > 0 else HARGA_THRESHOLD
+    return extract_price_number(product.get("price", "0")) >= effective_threshold
 
 async def human_delay(min_sec=2.0, max_sec=5.0):
     if random.random() < 0.12:

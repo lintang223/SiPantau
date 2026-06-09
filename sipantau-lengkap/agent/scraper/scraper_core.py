@@ -984,7 +984,7 @@ async def take_screenshot(page, product: dict, folder: str) -> str | None:
 # ══════════════════════════════════════════
 #  SCRAPE DETAIL PRODUK + SCREENSHOT
 # ══════════════════════════════════════════
-async def scrape_product_detail(page, product: dict) -> dict:
+async def scrape_product_detail(page, product: dict, harga_threshold: int = 0) -> dict:
     if not product.get("link"):
         product["scraped_at"]   = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         product["status"]       = "no_link"
@@ -1080,7 +1080,7 @@ async def scrape_product_detail(page, product: dict) -> dict:
             product["status"] = "partial"
             break
 
-    mahal     = is_expensive(product)
+    mahal     = is_expensive(product, harga_threshold)
     ss_folder = SCREENSHOT_MAHAL if mahal else SCREENSHOT_FOLDER
     ss_path   = await take_screenshot(page, product, ss_folder)
 
