@@ -4,8 +4,14 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
-from scraper.config import HARGA_THRESHOLD, SUMMARY_FILE, OUTPUT_FOLDER
-from scraper.utils import extract_price_number, sanitize_filename, _unique_path
+try:
+    from scraper.config import HARGA_THRESHOLD, SUMMARY_FILE, OUTPUT_FOLDER
+except ImportError:
+    from config import HARGA_THRESHOLD, SUMMARY_FILE, OUTPUT_FOLDER
+try:
+    from scraper.utils import extract_price_number, sanitize_filename, _unique_path
+except ImportError:
+    from utils import extract_price_number, sanitize_filename, _unique_path
 
 # ══════════════════════════════════════════
 #  EXCEL OUTPUT

@@ -5,23 +5,44 @@ import re
 import json
 from datetime import datetime
 
-from config import (
-    PAGE_TIMEOUT, MAX_LOAD_MORE, THROTTLE_LIMIT, WAIT_DATA_TIMEOUT,
-    MAX_DETAIL_RETRY, SPINNER_TIMEOUT, MIN_FIELDS_OK, TOTAL_FIELDS,
-    SCREENSHOT_FOLDER, SCREENSHOT_MAHAL, SCREENSHOT_JPEG, SCREENSHOT_QUALITY,
-    OUTPUT_FOLDER, USE_RESOURCE_BLOCK, SCRAPER_PLATFORM
-)
-from utils import (
-    format_price, parse_rating, clean_text, sanitize_filename,
-    is_expensive, notify_expensive, logger, extract_price_number
-)
-from browser_manager import safe_goto, is_blocked, is_shopee_login_wall
+try:
+    from scraper.config import (
+        PAGE_TIMEOUT, MAX_LOAD_MORE, THROTTLE_LIMIT, WAIT_DATA_TIMEOUT,
+        MAX_DETAIL_RETRY, SPINNER_TIMEOUT, MIN_FIELDS_OK, TOTAL_FIELDS,
+        SCREENSHOT_FOLDER, SCREENSHOT_MAHAL, SCREENSHOT_JPEG, SCREENSHOT_QUALITY,
+        OUTPUT_FOLDER, USE_RESOURCE_BLOCK, SCRAPER_PLATFORM
+    )
+except ImportError:
+    from config import (
+        PAGE_TIMEOUT, MAX_LOAD_MORE, THROTTLE_LIMIT, WAIT_DATA_TIMEOUT,
+        MAX_DETAIL_RETRY, SPINNER_TIMEOUT, MIN_FIELDS_OK, TOTAL_FIELDS,
+        SCREENSHOT_FOLDER, SCREENSHOT_MAHAL, SCREENSHOT_JPEG, SCREENSHOT_QUALITY,
+        OUTPUT_FOLDER, USE_RESOURCE_BLOCK, SCRAPER_PLATFORM
+    )
+try:
+    from scraper.utils import (
+        format_price, parse_rating, clean_text, sanitize_filename,
+        is_expensive, notify_expensive, logger, extract_price_number
+    )
+except ImportError:
+    from utils import (
+        format_price, parse_rating, clean_text, sanitize_filename,
+        is_expensive, notify_expensive, logger, extract_price_number
+    )
+try:
+    from scraper.browser_manager import safe_goto, is_blocked, is_shopee_login_wall
+except ImportError:
+    from browser_manager import safe_goto, is_blocked, is_shopee_login_wall
 
 try:
-    from session_manager import capture_shopee_session, save_shopee_session, clear_shopee_session
+    from scraper.session_manager import capture_shopee_session, save_shopee_session, clear_shopee_session
     _SESSION_MGR_OK = True
 except ImportError:
-    _SESSION_MGR_OK = False
+    try:
+        from session_manager import capture_shopee_session, save_shopee_session, clear_shopee_session
+        _SESSION_MGR_OK = True
+    except ImportError:
+        _SESSION_MGR_OK = False
 
 try:
     from playwright_stealth import stealth as stealth_async

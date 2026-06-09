@@ -1,13 +1,20 @@
 import asyncio
 import random
 import re
-from config import PAGE_TIMEOUT, USER_AGENTS, VIEWPORTS, USE_ADAPTIVE_RL, BLOCK_PATTERNS
+try:
+    from scraper.config import PAGE_TIMEOUT, USER_AGENTS, VIEWPORTS, USE_ADAPTIVE_RL, BLOCK_PATTERNS
+except ImportError:
+    from config import PAGE_TIMEOUT, USER_AGENTS, VIEWPORTS, USE_ADAPTIVE_RL, BLOCK_PATTERNS
 
 try:
-    from session_manager import apply_shopee_session, load_shopee_session
+    from scraper.session_manager import apply_shopee_session, load_shopee_session
     _SESSION_MGR_AVAILABLE = True
 except ImportError:
-    _SESSION_MGR_AVAILABLE = False
+    try:
+        from session_manager import apply_shopee_session, load_shopee_session
+        _SESSION_MGR_AVAILABLE = True
+    except ImportError:
+        _SESSION_MGR_AVAILABLE = False
 
 try:
     from playwright_stealth import stealth

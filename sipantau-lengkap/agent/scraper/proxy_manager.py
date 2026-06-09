@@ -2,7 +2,10 @@ import os
 import re
 import asyncio
 import aiohttp
-from scraper.config import PROXY_FILE, USE_PROXY
+try:
+    from scraper.config import PROXY_FILE, USE_PROXY
+except ImportError:
+    from config import PROXY_FILE, USE_PROXY
 
 class ProxyManager:
     def __init__(self, path: str = PROXY_FILE):

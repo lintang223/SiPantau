@@ -6,7 +6,10 @@ import time
 import random
 import asyncio
 from datetime import datetime
-from scraper.config import *
+try:
+    from scraper.config import *
+except ImportError:
+    from config import *
 
 # ══════════════════════════════════════════
 #  LOGGING
