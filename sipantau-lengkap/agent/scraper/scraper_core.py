@@ -10,14 +10,14 @@ try:
         PAGE_TIMEOUT, MAX_LOAD_MORE, THROTTLE_LIMIT, WAIT_DATA_TIMEOUT,
         MAX_DETAIL_RETRY, SPINNER_TIMEOUT, MIN_FIELDS_OK, TOTAL_FIELDS,
         SCREENSHOT_FOLDER, SCREENSHOT_MAHAL, SCREENSHOT_JPEG, SCREENSHOT_QUALITY,
-        OUTPUT_FOLDER, USE_RESOURCE_BLOCK, SCRAPER_PLATFORM
+        OUTPUT_FOLDER, USE_RESOURCE_BLOCK, SCRAPER_PLATFORM, HARGA_THRESHOLD
     )
 except ImportError:
     from config import (
         PAGE_TIMEOUT, MAX_LOAD_MORE, THROTTLE_LIMIT, WAIT_DATA_TIMEOUT,
         MAX_DETAIL_RETRY, SPINNER_TIMEOUT, MIN_FIELDS_OK, TOTAL_FIELDS,
         SCREENSHOT_FOLDER, SCREENSHOT_MAHAL, SCREENSHOT_JPEG, SCREENSHOT_QUALITY,
-        OUTPUT_FOLDER, USE_RESOURCE_BLOCK, SCRAPER_PLATFORM
+        OUTPUT_FOLDER, USE_RESOURCE_BLOCK, SCRAPER_PLATFORM, HARGA_THRESHOLD
     )
 try:
     from scraper.utils import (
@@ -166,6 +166,16 @@ async def scroll_and_extract(page, keyword: str, seen_links: set) -> list[dict]:
 
                             let title  = titleEl ? cleanText(titleEl.innerText) : "N/A";
                             let price  = priceEl ? cleanText(priceEl.innerText) : "";
+                            if (!price) {
+                                let els = card.querySelectorAll("span, div, p");
+                                for (let el of els) {
+                                    let t = el.textContent || "";
+                                    if (t.includes("Rp") && /[0-9]/.test(t) && t.length < 30) {
+                                        price = cleanText(t);
+                                        break;
+                                    }
+                                }
+                            }
 
                             let ratingRaw = ratingEl ? (ratingEl.getAttribute("aria-label") || "") : "";
                             let ratingMatch = ratingRaw.replace(/,/g, '.').match(/\\d+\\.?\\d*/);
@@ -383,15 +393,16 @@ async def scrape_all_pages(
         before    = len(all_products)
         new_prods = await scroll_and_extract(page, keyword, seen_links)
 
-        if harga_threshold and harga_threshold > 0:
+        effective_threshold = harga_threshold if harga_threshold > 0 else HARGA_THRESHOLD
+        if effective_threshold > 0:
             before_filter = len(new_prods)
             new_prods = [
                 p for p in new_prods
-                if extract_price_number(p.get("price", "0")) >= harga_threshold
+                if extract_price_number(p.get("price", "0")) >= effective_threshold
             ]
             skipped = before_filter - len(new_prods)
             if skipped:
-                print(f"      🚫 {skipped} produk di-skip (harga < Rp{harga_threshold:,})")
+                print(f"      🚫 {skipped} produk di-skip (harga < Rp{effective_threshold:,})")
 
         if target_product_count and target_product_count > 0:
             remaining = target_product_count - len(all_products)
@@ -688,15 +699,16 @@ async def scrape_all_pages_shopee(
             fallback = await _shopee_dom_fallback(page, keyword, seen_links)
 
             # Filter fallback
-            if harga_threshold and harga_threshold > 0:
+            effective_threshold = harga_threshold if harga_threshold > 0 else HARGA_THRESHOLD
+            if effective_threshold > 0:
                 before_filter = len(fallback)
                 fallback = [
                     p for p in fallback
-                    if extract_price_number(p.get("price", "0")) >= harga_threshold
+                    if extract_price_number(p.get("price", "0")) >= effective_threshold
                 ]
                 skipped = before_filter - len(fallback)
                 if skipped:
-                    print(f"      🚫 {skipped} produk fallback di-skip (harga < Rp{harga_threshold:,})")
+                    print(f"      🚫 {skipped} produk fallback di-skip (harga < Rp{effective_threshold:,})")
 
             # Slice fallback
             if target_product_count and target_product_count > 0:
@@ -718,15 +730,16 @@ async def scrape_all_pages_shopee(
         new_prods = _parse_shopee_api_items(api_data, keyword, seen_links)
 
         # Filter new_prods
-        if harga_threshold and harga_threshold > 0:
+        effective_threshold = harga_threshold if harga_threshold > 0 else HARGA_THRESHOLD
+        if effective_threshold > 0:
             before_filter = len(new_prods)
             new_prods = [
                 p for p in new_prods
-                if extract_price_number(p.get("price", "0")) >= harga_threshold
+                if extract_price_number(p.get("price", "0")) >= effective_threshold
             ]
             skipped = before_filter - len(new_prods)
             if skipped:
-                print(f"      🚫 {skipped} produk di-skip (harga < Rp{harga_threshold:,})")
+                print(f"      🚫 {skipped} produk di-skip (harga < Rp{effective_threshold:,})")
 
         # Slice new_prods
         if target_product_count and target_product_count > 0:

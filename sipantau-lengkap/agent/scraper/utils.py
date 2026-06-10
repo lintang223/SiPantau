@@ -134,8 +134,11 @@ def parse_rating(raw: str) -> str:
     return match.group() if match else "N/A"
 
 def extract_price_number(price_str: str) -> int:
-    digits = re.sub(r'[^0-9]', '', str(price_str))
-    return int(digits) if digits else 0
+    match = re.search(r'\d{1,3}(?:\.\d{3})+|\d+', str(price_str))
+    if match:
+        digits = re.sub(r'[^0-9]', '', match.group())
+        return int(digits) if digits else 0
+    return 0
 
 def format_price(raw: str) -> str:
     raw = raw.strip()
