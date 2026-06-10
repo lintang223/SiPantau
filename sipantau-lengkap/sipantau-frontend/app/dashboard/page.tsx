@@ -70,6 +70,13 @@ export default function DashboardPage() {
           margin-bottom: 2rem;
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
           position: relative; overflow: hidden;
+          text-decoration: none;
+          transition: transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94), border-color 0.3s, background 0.3s;
+        }
+        .dash-user-card:hover {
+          transform: translateY(-3px);
+          border-color: rgba(255, 255, 255, 0.3);
+          background: rgba(10, 25, 15, 0.65);
         }
         .dash-user-card::before {
           content: ''; position: absolute; top: 0; left: 0; width: 150px; height: 100%;
@@ -156,7 +163,7 @@ export default function DashboardPage() {
         )}
 
         {user && (
-          <div className="dash-user-card">
+          <Link href="/profil" className="dash-user-card">
             <div style={{ width: 56, height: 56, borderRadius: "16px", background: divisiColor, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#fff", boxShadow: "0 4px 14px rgba(0,0,0,0.2)" }}>
               <User size={28} />
             </div>
@@ -176,7 +183,7 @@ export default function DashboardPage() {
                     : "Akses: Milik Sendiri"}
               </div>
             </div>
-          </div>
+          </Link>
         )}
 
         <div className="dash-stat-grid">

@@ -80,6 +80,7 @@ export default function LupaPasswordPage() {
         .lp-back {
           display: inline-flex; align-items: center; gap: 6px; color: #6b7280; font-size: 13px; font-weight: 600;
           text-decoration: none; margin-top: 24px; cursor: pointer;
+          border: none; background: none; padding: 0; font-family: inherit;
         }
         .lp-back:hover { color: #111; }
         
