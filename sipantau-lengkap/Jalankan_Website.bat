@@ -13,7 +13,7 @@ pip install fastapi uvicorn pandas openpyxl pydantic --quiet
 echo.
 
 echo [2/3] Menjalankan Backend (API)...
-start "SiPantau Backend" cmd /c "title SiPantau Backend && python main_sqlite.py"
+start "SiPantau Backend" cmd /c "title SiPantau Backend && python main.py"
 echo Backend berjalan di background.
 echo.
 

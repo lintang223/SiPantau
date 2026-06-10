@@ -5,26 +5,27 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { CheckCircle, AlertTriangle, Plug, Server, RefreshCw } from "lucide-react";
+import { API_URL } from "@/lib/api";
 
 export default function PengaturanPage() {
   const router = useRouter();
   useEffect(() => {
-    if (!sessionStorage.getItem("sipantau_auth")) {
+    if (!localStorage.getItem("sipantau_auth")) {
       router.push("/");
       return;
     }
-    const userStr = sessionStorage.getItem("sipantau_user");
+    const userStr = localStorage.getItem("sipantau_user");
     if (userStr) {
       const user = JSON.parse(userStr);
-      if (user.divisi !== "superadmin" && user.divisi !== "sekdit") {
+      if (user.divisi !== "sekditjen" && user.divisi !== "dit_ppsa") {
         router.push("/akses-ditolak");
       }
     }
   }, [router]);
 
-  const [apiUrl, setApiUrl]       = useState("http://localhost:8000");
+  const [apiUrl, setApiUrl]       = useState(API_URL);
   const [status, setStatus]       = useState<"idle" | "checking" | "ok" | "err">("idle");
-  const [statusTxt, setStatusTxt] = useState("");
+  const [statusTxt, setStatusTxt] = useState<React.ReactNode>("");
 
   async function cekKoneksi() {
     setStatus("checking");
@@ -83,7 +84,7 @@ export default function PengaturanPage() {
                   className="finput"
                   value={apiUrl}
                   onChange={e => setApiUrl(e.target.value)}
-                  placeholder="http://localhost:8000"
+                  placeholder={API_URL}
                 />
               </div>
               <button
@@ -123,7 +124,7 @@ export default function PengaturanPage() {
               <div className="info-card-body">
                 <div>1. Buka terminal di folder project</div>
                 <code className="code-block">$ python main.py</code>
-                <div>2. Backend akan berjalan di <code style={{ fontFamily: "DM Mono, monospace", background: "var(--green-light)", padding: "1px 6px", borderRadius: 4, fontSize: ".75rem" }}>http://localhost:8000</code></div>
+                <div>2. Backend akan berjalan di <code style={{ fontFamily: "DM Mono, monospace", background: "var(--green-light)", padding: "1px 6px", borderRadius: 4, fontSize: ".75rem" }}>{API_URL}</code></div>
                 <div>3. Klik <strong>Cek Koneksi</strong> untuk memverifikasi</div>
               </div>
             </div>
@@ -143,7 +144,7 @@ export default function PengaturanPage() {
                 { lbl: "Versi",     val: "1.0.0",                   cls: "blue"   },
                 { lbl: "Instansi",  val: "KLHK RI",                 cls: "green"  },
                 { lbl: "Framework", val: "Next.js 14",              cls: "purple" },
-                { lbl: "Platform",  val: "Tokopedia · Shopee · Lazada", cls: "orange" },
+                { lbl: "Platform",  val: "Tokopedia", cls: "orange" },
                 { lbl: "Tahun",     val: "2025",                    cls: "blue"   },
               ].map(({ lbl, val, cls }) => (
                 <div key={lbl} className={`sys-badge ${cls}`}>

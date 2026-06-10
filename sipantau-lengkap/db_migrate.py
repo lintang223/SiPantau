@@ -34,7 +34,7 @@ for table, col in legacy_drops:
 # ── 2. Pastikan kolom RBAC penting ada (idempotent) ───────────────────────────
 rbac_cols = [
     ('password_plain',  'TEXT'),
-    ('divisi',          "TEXT DEFAULT 'pengawasan'"),
+    ('divisi',          "TEXT DEFAULT 'balai_gakkum'"),
     ('level',           'INTEGER DEFAULT 3'),
     ('can_export',      'BOOLEAN DEFAULT true'),
     ('can_manage_users','BOOLEAN DEFAULT false'),
@@ -55,11 +55,11 @@ for col, col_type in rbac_cols:
 cur.execute("""
     UPDATE users SET
         level = CASE divisi
-            WHEN 'superadmin' THEN 1
-            WHEN 'sekdit'     THEN 2
+            WHEN 'sekditjen' THEN 1
+            WHEN 'dit_ppsa' THEN 2
             ELSE 3
         END,
-        can_manage_users = (divisi = 'superadmin')
+        can_manage_users = (divisi = 'sekditjen')
     WHERE divisi IS NOT NULL
 """)
 print(f'[OK] SYNCED   : level & can_manage_users ({cur.rowcount} rows)')
@@ -109,11 +109,9 @@ else:
 
 # ── 6. Seed divisi_access (idempotent) ────────────────────────────────────────
 access_rules = [
-    ('superadmin', 'sekdit'),
-    ('superadmin', 'pengawasan'),
-    ('superadmin', 'pengaduan'),
-    ('sekdit',     'pengawasan'),
-    ('sekdit',     'pengaduan'),
+    ('sekditjen', 'dit_ppsa'),
+    ('sekditjen', 'balai_gakkum'),
+    ('dit_ppsa',  'balai_gakkum'),
 ]
 inserted = 0
 for asal, target in access_rules:

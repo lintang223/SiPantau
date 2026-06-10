@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { Settings, Activity, ClipboardList, AlertTriangle, CheckCircle, Search, FolderOpen, Trash2, Download } from "lucide-react";
+import { API_URL } from "@/lib/api";
 
 type Produk = {
   nama: string;
@@ -16,15 +17,13 @@ type Produk = {
   waktu: string;
 };
 
-const API_URL = "http://localhost:8000";
-
 export default function ScrapingPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
 
   useEffect(() => {
-    if (!sessionStorage.getItem("sipantau_auth")) { router.push("/"); return; }
-    const userData = sessionStorage.getItem("sipantau_user");
+    if (!localStorage.getItem("sipantau_auth")) { router.push("/"); return; }
+    const userData = localStorage.getItem("sipantau_user");
     if (userData) setUsername(JSON.parse(userData).username);
   }, [router]);
 
@@ -32,22 +31,18 @@ export default function ScrapingPage() {
   const [pages, setPages]         = useState("3");
   const [targetCount, setTargetCount] = useState("50");
   const [hargaThreshold, setHargaThreshold] = useState("350000");
-  const [platforms, setPlatforms] = useState({ tokopedia: true, shopee: false, lazada: false });
+  const [platforms] = useState({ tokopedia: true });
   const [loading, setLoading]     = useState(false);
   const [results, setResults]     = useState<Produk[]>([]);
   const [log, setLog]             = useState<string[]>([]);
   const [done, setDone]           = useState(false);
-  const [prog, setProg]           = useState({ tokopedia: 0, shopee: 0, lazada: 0 });
+  const [prog, setProg]           = useState({ tokopedia: 0 });
   const [fileExcel, setFileExcel] = useState("");
   const [agentJobId, setAgentJobId] = useState("");
   const [agentActive, setAgentActive] = useState(false);
   const [browserReady, setBrowserReady] = useState(false);
   const [browserMessage, setBrowserMessage] = useState("Memeriksa browser...");
   const [pollIntervalId, setPollIntervalId] = useState<NodeJS.Timeout | null>(null);
-  const [isShopeeLoginLoading, setIsShopeeLoginLoading] = useState(false);
-  const [shopeeSession, setShopeeSession] = useState<{
-    has_session: boolean; cookie_count: number; saved_at: string;
-  } | null>(null);
   const logRef                    = useRef<HTMLDivElement>(null);
   const pollRef                   = useRef<NodeJS.Timeout | null>(null); // agar bisa diakses dari restore
 
@@ -55,7 +50,7 @@ export default function ScrapingPage() {
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     try {
-      const saved = sessionStorage.getItem("sipantau_scrape_state");
+      const saved = localStorage.getItem("sipantau_scrape_state");
       if (saved) {
         const s = JSON.parse(saved);
         if (s.keyword)   setKeyword(s.keyword);
@@ -74,7 +69,7 @@ export default function ScrapingPage() {
   // ── Simpan state ke sessionStorage setiap kali berubah ───────────────────
   useEffect(() => {
     if (!hydrated) return;
-    sessionStorage.setItem("sipantau_scrape_state", JSON.stringify({
+    localStorage.setItem("sipantau_scrape_state", JSON.stringify({
       keyword, loading, done, results, log, prog, fileExcel, agentJobId
     }));
   }, [hydrated, keyword, loading, done, results, log, prog, fileExcel, agentJobId]);
@@ -104,45 +99,7 @@ export default function ScrapingPage() {
     return () => clearInterval(intv);
   }, []);
 
-  // ── Cek session Shopee dari agent ──────────────────────────────────────────
-  useEffect(() => {
-    if (!agentActive || !platforms.shopee) { setShopeeSession(null); return; }
-    const checkSession = async () => {
-      try {
-        const res = await fetch('http://localhost:7777/shopee-session');
-        if (res.ok) setShopeeSession(await res.json());
-      } catch { setShopeeSession(null); }
-    };
-    checkSession();
-    const intv = setInterval(checkSession, 10000);
-    return () => clearInterval(intv);
-  }, [agentActive, platforms.shopee]);
 
-  const handleClearShopeeSession = async () => {
-    if (!confirm('Hapus session Shopee? Anda perlu login ulang di scraping berikutnya.')) return;
-    try {
-      await fetch('http://localhost:7777/shopee-session', { method: 'DELETE' });
-      setShopeeSession({ has_session: false, cookie_count: 0, saved_at: '' });
-      addLog('🗑️ Session Shopee dihapus. Login ulang diperlukan.', 'warn');
-    } catch { alert('Gagal terhubung ke Agent.'); }
-  };
-
-  const handleStartShopeeLogin = async () => {
-    try {
-      setIsShopeeLoginLoading(true);
-      const res = await fetch('http://localhost:7777/shopee-login', { method: 'POST' });
-      const data = await res.json();
-      if (res.ok) {
-        addLog(`[SHOPEE LOGIN] ${data.message}`, 'info');
-      } else {
-        addLog(`[SHOPEE LOGIN ERROR] ${data.detail || data.message}`, 'warn');
-      }
-    } catch {
-      alert('Gagal memanggil Agent untuk login.');
-    } finally {
-      setTimeout(() => setIsShopeeLoginLoading(false), 2000);
-    }
-  };
 
   function addLog(msg: string, type: "ok" | "info" | "warn" = "ok") {
     const time = new Date().toLocaleTimeString("id-ID");
@@ -211,8 +168,8 @@ export default function ScrapingPage() {
   function handleReset() {
     if (loading) return; // jangan reset saat masih berjalan
     setLoading(false); setDone(false); setResults([]); setLog([]); setFileExcel(""); setAgentJobId("");
-    setProg({ tokopedia: 0, shopee: 0, lazada: 0 });
-    sessionStorage.removeItem("sipantau_scrape_state");
+    setProg({ tokopedia: 0 });
+    localStorage.removeItem("sipantau_scrape_state");
   }
 
   async function handleScrape(e: React.FormEvent) {
@@ -221,13 +178,13 @@ export default function ScrapingPage() {
     if (!selected.length) { alert("Pilih minimal satu platform!"); return; }
 
     setLoading(true); setDone(false); setResults([]); setLog([]); setFileExcel(""); setAgentJobId("");
-    setProg({ tokopedia: 0, shopee: 0, lazada: 0 });
+    setProg({ tokopedia: 0 });
 
     addLog("Memulai sesi pemantauan...", "info");
     addLog(`Kata kunci: "${keyword}" — ${selected.join(", ")}`, "info");
 
     if (agentActive) {
-      // Alur Local Agent (Bisa untuk Tokopedia, Shopee, Lazada)
+      // Alur Local Agent (Tokopedia)
       let allResults: Produk[] = [];
 
       for (const plat of selected) {
@@ -324,7 +281,7 @@ export default function ScrapingPage() {
       setDone(true);
       setLoading(false);
     } else {
-      // Alur Fallback Backend (Shopee, Lazada, atau Tokopedia jika agent mati)
+      // Alur Fallback Backend (Tokopedia jika agent mati)
       try {
         const res = await fetch(`${API_URL}/api/scrape`, {
           method: "POST",
@@ -371,7 +328,7 @@ export default function ScrapingPage() {
   }
 
   const selectedPlats = Object.entries(platforms).filter(([, v]) => v).map(([k]) => k);
-  const badgeClass = (p: string) => p === "Tokopedia" ? "bt" : p === "Shopee" ? "bs" : "bl";
+  const badgeClass = () => "bt";
 
   return (
     <>
@@ -381,7 +338,7 @@ export default function ScrapingPage() {
         <div className="phead">
           <div className="bc">Sipantau / <span>Pemantauan</span></div>
           <h1>Pemantauan Market Place</h1>
-          <p>Pantau Listing Produk Dari Tokopedia, shopee dan Lazada secara Otomatis</p>
+          <p>Pantau Listing Produk Dari Tokopedia secara Otomatis</p>
         </div>
 
         {/* ─── Banner: Agent tidak berjalan ─── */}
@@ -426,51 +383,7 @@ export default function ScrapingPage() {
           </div>
         )}
 
-        {/* ─── Banner: Status Session Shopee ─── */}
-        {agentActive && platforms.shopee && (
-          shopeeSession?.has_session ? (
-            <div style={{ background: "#FFF7ED", color: "#92400E", padding: ".8rem 1.2rem", borderRadius: "10px", marginBottom: "1.2rem", border: "1.5px solid #FCD34D", display: "flex", alignItems: "center", gap: ".8rem", fontSize: ".88rem", flexWrap: "wrap" }}>
-              <span style={{ fontSize: "1.3rem" }}>🍪</span>
-              <div style={{ flex: 1 }}>
-                <b>Session Shopee aktif</b> — {shopeeSession.cookie_count} cookie tersimpan
-                {shopeeSession.saved_at && (
-                  <span style={{ marginLeft: ".5rem", opacity: .7, fontSize: ".8rem" }}>
-                    (disimpan: {new Date(shopeeSession.saved_at).toLocaleString("id-ID")})
-                  </span>
-                )}
-                <div style={{ fontSize: ".78rem", marginTop: ".2rem", opacity: .75 }}>
-                  Login otomatis akan digunakan. Session valid ±18 jam.
-                </div>
-              </div>
-              <button
-                onClick={handleClearShopeeSession}
-                style={{ padding: ".35rem .8rem", border: "1px solid #D97706", borderRadius: 6, background: "transparent", cursor: "pointer", fontSize: ".8rem", color: "#92400E", fontWeight: 600, whiteSpace: "nowrap" }}
-              >🗑️ Hapus Session</button>
-            </div>
-          ) : (
-            <div style={{ background: "#FEF2F2", color: "#991B1B", padding: ".85rem 1.2rem", borderRadius: "10px", marginBottom: "1.2rem", border: "1.5px solid #FCA5A5", fontSize: ".88rem" }}>
-              <div style={{ fontWeight: 700, marginBottom: ".35rem" }}>⚠️ Belum ada session Shopee tersimpan</div>
-              <div style={{ opacity: .85, lineHeight: 1.6 }}>
-                Shopee memerlukan login untuk scraping. Jika terkena <i>login wall</i>, scraper akan berhenti.
-                <br />
-                <b>Solusi:</b> Klik tombol di bawah ini. Aplikasi Agent akan membuka browser khusus agar Anda bisa login. 
-                Setelah Anda login, session akan otomatis tersimpan dan digunakan untuk pemantauan.
-              </div>
-              <button
-                type="button"
-                onClick={handleStartShopeeLogin}
-                disabled={isShopeeLoginLoading}
-                style={{ marginTop: ".8rem", padding: ".5rem 1rem", border: "none", borderRadius: 6, background: "#B91C1C", color: "white", fontWeight: 600, cursor: isShopeeLoginLoading ? "not-allowed" : "pointer", fontSize: ".85rem", display: "inline-flex", alignItems: "center", gap: ".4rem" }}
-              >
-                {isShopeeLoginLoading ? (
-                  <><Search size={14} className="animate-spin" /> Membuka Browser...</>
-                ) : (
-                  <>🔑 Buka Browser Login Shopee</>
-                )}
-              </button>
-            </div>
-          )
-        )}
+
 
         <div className="card" style={{ marginBottom: ".85rem" }}>
           <div className="card-head">
@@ -519,14 +432,13 @@ export default function ScrapingPage() {
                 <label style={{ fontSize: ".7rem", fontWeight: 700, color: "var(--ink2)", letterSpacing: ".4px", textTransform: "uppercase", display: "block", marginBottom: ".5rem" }}>
                   Platform Tujuan
                 </label>
-                <div className="fcheck-group">
-                  {(["tokopedia", "shopee", "lazada"] as const).map(p => (
-                    <label key={p} className="fcheck">
-                      <input type="checkbox" checked={platforms[p]}
-                        onChange={e => setPlatforms(prev => ({ ...prev, [p]: e.target.checked }))} />
-                      {p.charAt(0).toUpperCase() + p.slice(1)}
-                    </label>
-                  ))}
+                <div style={{ display: "flex", alignItems: "center", gap: ".6rem" }}>
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: ".5rem", padding: ".45rem .85rem", background: "#e8f7e9", border: "1.5px solid #86efac", borderRadius: 8, fontSize: ".85rem", fontWeight: 600, color: "#15803d" }}>
+                    <img src="/tokopedia.png" alt="Tokopedia" width={20} height={20} style={{ objectFit: "contain" }} />
+                    Tokopedia
+                    <CheckCircle size={14} color="#22c55e" />
+                  </div>
+                  <span style={{ fontSize: ".72rem", color: "var(--ink3)", fontStyle: "italic" }}>Platform eksklusif</span>
                 </div>
               </div>
 
@@ -667,7 +579,7 @@ export default function ScrapingPage() {
                         Rp {r.harga.toLocaleString("id-ID")}
                         {isExpensive && <span style={{ marginLeft: "6px", fontSize: "0.65rem", padding: "2px 6px", background: "#FEE4E2", color: "#D92D20", borderRadius: "10px" }}>🚨 Mahal</span>}
                       </td>
-                      <td><span className={`badge ${badgeClass(r.platform)}`}>{r.platform}</span></td>
+                      <td><span className={`badge ${badgeClass()}`}>{r.platform}</span></td>
                       <td className="td-g">
                         {r.rating > 0 ? <span>⭐ {r.rating}</span> : <span style={{ color: "var(--border-mid)" }}>—</span>}
                       </td>

@@ -1,0 +1,746 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SiPantau — Entity Relationship Diagram (ERD)
+  Format : draw.io XML (dapat dibuka di https://app.diagrams.net)
+  Dibuat : 2026-06-08
+  Versi  : 2.0.0
+  Basis  : main.py (FastAPI + PostgreSQL) — 5 tabel utama + RBAC
+-->
+<mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1"
+              tooltips="1" connect="1" arrows="1" fold="1" page="1"
+              pageScale="1" pageWidth="1654" pageHeight="1169"
+              math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- ══════════════════════════════════════════════
+         JUDUL DIAGRAM
+    ══════════════════════════════════════════════ -->
+    <mxCell id="title" value="&lt;b&gt;SiPantau — Entity Relationship Diagram (ERD)&lt;/b&gt;&lt;br&gt;Sistem Riset Informasi Market | Kementerian LHK RI | v2.0.0"
+            style="text;html=1;strokeColor=none;fillColor=#1B4332;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontColor=#FFFFFF;fontSize=14;fontStyle=1;"
+            vertex="1" parent="1">
+      <mxGeometry x="300" y="30" width="1050" height="60" as="geometry" />
+    </mxCell>
+
+    <!-- ══════════════════════════════════════════════
+         TABEL: users
+         Kolom: id, username, password, nama, divisi,
+                level, can_export, can_manage_users,
+                foto_profil, created_at
+    ══════════════════════════════════════════════ -->
+
+    <!-- Header tabel users -->
+    <mxCell id="users_header" value="&lt;b&gt;👤 users&lt;/b&gt;"
+            style="swimlane;startSize=30;fillColor=#1B4332;strokeColor=#0d2b1f;fontColor=#FFFFFF;fontSize=13;fontStyle=1;horizontal=1;rounded=1;arcSize=5;"
+            vertex="1" parent="1">
+      <mxGeometry x="60" y="160" width="320" height="360" as="geometry" />
+    </mxCell>
+
+    <!-- users: id -->
+    <mxCell id="users_id" value="🔑 id"
+            style="text;strokeColor=#0d2b1f;fillColor=#D8F3DC;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;fontStyle=1;"
+            vertex="1" parent="users_header">
+      <mxGeometry x="0" y="30" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="users_id_type" value="SERIAL PRIMARY KEY"
+            style="text;strokeColor=#0d2b1f;fillColor=#D8F3DC;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="users_header">
+      <mxGeometry x="160" y="30" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <!-- users: username -->
+    <mxCell id="users_username" value="🔑 username"
+            style="text;strokeColor=#b7dfc4;fillColor=#F0F7F4;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;fontStyle=1;"
+            vertex="1" parent="users_header">
+      <mxGeometry x="0" y="58" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="users_username_type" value="TEXT UNIQUE NOT NULL"
+            style="text;strokeColor=#b7dfc4;fillColor=#F0F7F4;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="users_header">
+      <mxGeometry x="160" y="58" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <!-- users: password -->
+    <mxCell id="users_password" value="  password"
+            style="text;strokeColor=#0d2b1f;fillColor=#FFFFFF;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="users_header">
+      <mxGeometry x="0" y="86" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="users_password_type" value="TEXT NOT NULL"
+            style="text;strokeColor=#0d2b1f;fillColor=#FFFFFF;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="users_header">
+      <mxGeometry x="160" y="86" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <!-- users: nama -->
+    <mxCell id="users_nama" value="  nama"
+            style="text;strokeColor=#b7dfc4;fillColor=#F0F7F4;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="users_header">
+      <mxGeometry x="0" y="114" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="users_nama_type" value="TEXT"
+            style="text;strokeColor=#b7dfc4;fillColor=#F0F7F4;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="users_header">
+      <mxGeometry x="160" y="114" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <!-- users: divisi -->
+    <mxCell id="users_divisi" value="  divisi"
+            style="text;strokeColor=#0d2b1f;fillColor=#FFFFFF;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="users_header">
+      <mxGeometry x="0" y="142" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="users_divisi_type" value="TEXT DEFAULT 'balai_gakkum'"
+            style="text;strokeColor=#0d2b1f;fillColor=#FFFFFF;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="users_header">
+      <mxGeometry x="160" y="142" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <!-- users: level -->
+    <mxCell id="users_level" value="  level"
+            style="text;strokeColor=#b7dfc4;fillColor=#F0F7F4;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="users_header">
+      <mxGeometry x="0" y="170" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="users_level_type" value="INTEGER DEFAULT 3"
+            style="text;strokeColor=#b7dfc4;fillColor=#F0F7F4;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="users_header">
+      <mxGeometry x="160" y="170" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <!-- users: can_export -->
+    <mxCell id="users_can_export" value="  can_export"
+            style="text;strokeColor=#0d2b1f;fillColor=#FFFFFF;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="users_header">
+      <mxGeometry x="0" y="198" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="users_can_export_type" value="BOOLEAN DEFAULT true"
+            style="text;strokeColor=#0d2b1f;fillColor=#FFFFFF;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="users_header">
+      <mxGeometry x="160" y="198" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <!-- users: can_manage_users -->
+    <mxCell id="users_can_manage" value="  can_manage_users"
+            style="text;strokeColor=#b7dfc4;fillColor=#F0F7F4;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="users_header">
+      <mxGeometry x="0" y="226" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="users_can_manage_type" value="BOOLEAN DEFAULT false"
+            style="text;strokeColor=#b7dfc4;fillColor=#F0F7F4;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="users_header">
+      <mxGeometry x="160" y="226" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <!-- users: foto_profil -->
+    <mxCell id="users_foto" value="  foto_profil"
+            style="text;strokeColor=#0d2b1f;fillColor=#FFFFFF;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="users_header">
+      <mxGeometry x="0" y="254" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="users_foto_type" value="TEXT (nullable)"
+            style="text;strokeColor=#0d2b1f;fillColor=#FFFFFF;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="users_header">
+      <mxGeometry x="160" y="254" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <!-- users: created_at -->
+    <mxCell id="users_created" value="  created_at"
+            style="text;strokeColor=#b7dfc4;fillColor=#F0F7F4;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="users_header">
+      <mxGeometry x="0" y="282" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="users_created_type" value="TEXT (YYYY-MM-DD HH:MM:SS)"
+            style="text;strokeColor=#b7dfc4;fillColor=#F0F7F4;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="users_header">
+      <mxGeometry x="160" y="282" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <!-- users: RBAC legend -->
+    <mxCell id="users_legend" value="level: 1=sekditjen | 2=dit_ppsa | 3=balai_gakkum"
+            style="text;strokeColor=none;fillColor=#FFFDE7;align=center;verticalAlign=middle;fontSize=9;fontColor=#5f4e00;rounded=1;"
+            vertex="1" parent="users_header">
+      <mxGeometry x="0" y="320" width="320" height="26" as="geometry" />
+    </mxCell>
+
+    <!-- ══════════════════════════════════════════════
+         TABEL: hasil_scraping
+         Kolom: id, session_id, username (FK), keyword,
+                nama_produk, harga, platform, rating,
+                terjual, url_produk, gambar_url, waktu_scrape
+    ══════════════════════════════════════════════ -->
+
+    <mxCell id="hs_header" value="&lt;b&gt;🛒 hasil_scraping&lt;/b&gt;"
+            style="swimlane;startSize=30;fillColor=#1d4ed8;strokeColor=#1238a0;fontColor=#FFFFFF;fontSize=13;fontStyle=1;horizontal=1;rounded=1;arcSize=5;"
+            vertex="1" parent="1">
+      <mxGeometry x="480" y="160" width="320" height="390" as="geometry" />
+    </mxCell>
+
+    <mxCell id="hs_id" value="🔑 id"
+            style="text;strokeColor=#1238a0;fillColor=#dbeafe;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;fontStyle=1;"
+            vertex="1" parent="hs_header">
+      <mxGeometry x="0" y="30" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="hs_id_type" value="SERIAL PRIMARY KEY"
+            style="text;strokeColor=#1238a0;fillColor=#dbeafe;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="hs_header">
+      <mxGeometry x="160" y="30" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="hs_session" value="  session_id"
+            style="text;strokeColor=#93c5fd;fillColor=#eff6ff;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="hs_header">
+      <mxGeometry x="0" y="58" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="hs_session_type" value="TEXT"
+            style="text;strokeColor=#93c5fd;fillColor=#eff6ff;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="hs_header">
+      <mxGeometry x="160" y="58" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="hs_username" value="🔗 username (FK)"
+            style="text;strokeColor=#1238a0;fillColor=#FFFFFF;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;fontStyle=2;"
+            vertex="1" parent="hs_header">
+      <mxGeometry x="0" y="86" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="hs_username_type" value="TEXT → users.username"
+            style="text;strokeColor=#1238a0;fillColor=#FFFFFF;align=center;verticalAlign=middle;fontSize=10;fontColor=#1238a0;fontStyle=2;"
+            vertex="1" parent="hs_header">
+      <mxGeometry x="160" y="86" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="hs_keyword" value="  keyword"
+            style="text;strokeColor=#93c5fd;fillColor=#eff6ff;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="hs_header">
+      <mxGeometry x="0" y="114" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="hs_keyword_type" value="TEXT"
+            style="text;strokeColor=#93c5fd;fillColor=#eff6ff;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="hs_header">
+      <mxGeometry x="160" y="114" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="hs_nama" value="  nama_produk"
+            style="text;strokeColor=#1238a0;fillColor=#FFFFFF;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="hs_header">
+      <mxGeometry x="0" y="142" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="hs_nama_type" value="TEXT"
+            style="text;strokeColor=#1238a0;fillColor=#FFFFFF;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="hs_header">
+      <mxGeometry x="160" y="142" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="hs_harga" value="  harga"
+            style="text;strokeColor=#93c5fd;fillColor=#eff6ff;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="hs_header">
+      <mxGeometry x="0" y="170" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="hs_harga_type" value="BIGINT"
+            style="text;strokeColor=#93c5fd;fillColor=#eff6ff;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="hs_header">
+      <mxGeometry x="160" y="170" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="hs_platform" value="  platform"
+            style="text;strokeColor=#1238a0;fillColor=#FFFFFF;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="hs_header">
+      <mxGeometry x="0" y="198" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="hs_platform_type" value="TEXT (Tokopedia/Shopee/Lazada)"
+            style="text;strokeColor=#1238a0;fillColor=#FFFFFF;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="hs_header">
+      <mxGeometry x="160" y="198" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="hs_rating" value="  rating"
+            style="text;strokeColor=#93c5fd;fillColor=#eff6ff;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="hs_header">
+      <mxGeometry x="0" y="226" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="hs_rating_type" value="REAL"
+            style="text;strokeColor=#93c5fd;fillColor=#eff6ff;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="hs_header">
+      <mxGeometry x="160" y="226" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="hs_terjual" value="  terjual"
+            style="text;strokeColor=#1238a0;fillColor=#FFFFFF;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="hs_header">
+      <mxGeometry x="0" y="254" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="hs_terjual_type" value="TEXT"
+            style="text;strokeColor=#1238a0;fillColor=#FFFFFF;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="hs_header">
+      <mxGeometry x="160" y="254" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="hs_url" value="  url_produk"
+            style="text;strokeColor=#93c5fd;fillColor=#eff6ff;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="hs_header">
+      <mxGeometry x="0" y="282" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="hs_url_type" value="TEXT"
+            style="text;strokeColor=#93c5fd;fillColor=#eff6ff;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="hs_header">
+      <mxGeometry x="160" y="282" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="hs_gambar" value="  gambar_url"
+            style="text;strokeColor=#1238a0;fillColor=#FFFFFF;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="hs_header">
+      <mxGeometry x="0" y="310" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="hs_gambar_type" value="TEXT"
+            style="text;strokeColor=#1238a0;fillColor=#FFFFFF;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="hs_header">
+      <mxGeometry x="160" y="310" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="hs_waktu" value="  waktu_scrape"
+            style="text;strokeColor=#93c5fd;fillColor=#eff6ff;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="hs_header">
+      <mxGeometry x="0" y="338" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="hs_waktu_type" value="TEXT (YYYY-MM-DD HH:MM:SS)"
+            style="text;strokeColor=#93c5fd;fillColor=#eff6ff;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="hs_header">
+      <mxGeometry x="160" y="338" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <!-- ══════════════════════════════════════════════
+         TABEL: riwayat_session
+         Kolom: id, session_id, username (FK), keyword,
+                platforms, jumlah_data, status, file_excel,
+                divisi, waktu
+    ══════════════════════════════════════════════ -->
+
+    <mxCell id="rs_header" value="&lt;b&gt;📋 riwayat_session&lt;/b&gt;"
+            style="swimlane;startSize=30;fillColor=#7c3aed;strokeColor=#4c1d95;fontColor=#FFFFFF;fontSize=13;fontStyle=1;horizontal=1;rounded=1;arcSize=5;"
+            vertex="1" parent="1">
+      <mxGeometry x="900" y="160" width="320" height="360" as="geometry" />
+    </mxCell>
+
+    <mxCell id="rs_id" value="🔑 id"
+            style="text;strokeColor=#4c1d95;fillColor=#ede9fe;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;fontStyle=1;"
+            vertex="1" parent="rs_header">
+      <mxGeometry x="0" y="30" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="rs_id_type" value="SERIAL PRIMARY KEY"
+            style="text;strokeColor=#4c1d95;fillColor=#ede9fe;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="rs_header">
+      <mxGeometry x="160" y="30" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="rs_session" value="  session_id"
+            style="text;strokeColor=#c4b5fd;fillColor=#f5f3ff;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="rs_header">
+      <mxGeometry x="0" y="58" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="rs_session_type" value="TEXT"
+            style="text;strokeColor=#c4b5fd;fillColor=#f5f3ff;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="rs_header">
+      <mxGeometry x="160" y="58" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="rs_username" value="🔗 username (FK)"
+            style="text;strokeColor=#4c1d95;fillColor=#FFFFFF;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;fontStyle=2;"
+            vertex="1" parent="rs_header">
+      <mxGeometry x="0" y="86" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="rs_username_type" value="TEXT → users.username"
+            style="text;strokeColor=#4c1d95;fillColor=#FFFFFF;align=center;verticalAlign=middle;fontSize=10;fontColor=#4c1d95;fontStyle=2;"
+            vertex="1" parent="rs_header">
+      <mxGeometry x="160" y="86" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="rs_keyword" value="  keyword"
+            style="text;strokeColor=#c4b5fd;fillColor=#f5f3ff;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="rs_header">
+      <mxGeometry x="0" y="114" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="rs_keyword_type" value="TEXT"
+            style="text;strokeColor=#c4b5fd;fillColor=#f5f3ff;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="rs_header">
+      <mxGeometry x="160" y="114" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="rs_platforms" value="  platforms"
+            style="text;strokeColor=#4c1d95;fillColor=#FFFFFF;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="rs_header">
+      <mxGeometry x="0" y="142" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="rs_platforms_type" value="TEXT (comma-separated)"
+            style="text;strokeColor=#4c1d95;fillColor=#FFFFFF;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="rs_header">
+      <mxGeometry x="160" y="142" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="rs_jumlah" value="  jumlah_data"
+            style="text;strokeColor=#c4b5fd;fillColor=#f5f3ff;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="rs_header">
+      <mxGeometry x="0" y="170" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="rs_jumlah_type" value="INTEGER"
+            style="text;strokeColor=#c4b5fd;fillColor=#f5f3ff;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="rs_header">
+      <mxGeometry x="160" y="170" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="rs_status" value="  status"
+            style="text;strokeColor=#4c1d95;fillColor=#FFFFFF;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="rs_header">
+      <mxGeometry x="0" y="198" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="rs_status_type" value="TEXT (e.g. 'Selesai')"
+            style="text;strokeColor=#4c1d95;fillColor=#FFFFFF;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="rs_header">
+      <mxGeometry x="160" y="198" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="rs_file" value="  file_excel"
+            style="text;strokeColor=#c4b5fd;fillColor=#f5f3ff;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="rs_header">
+      <mxGeometry x="0" y="226" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="rs_file_type" value="TEXT (filename)"
+            style="text;strokeColor=#c4b5fd;fillColor=#f5f3ff;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="rs_header">
+      <mxGeometry x="160" y="226" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="rs_divisi" value="  divisi"
+            style="text;strokeColor=#4c1d95;fillColor=#FFFFFF;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="rs_header">
+      <mxGeometry x="0" y="254" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="rs_divisi_type" value="TEXT DEFAULT 'balai_gakkum'"
+            style="text;strokeColor=#4c1d95;fillColor=#FFFFFF;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="rs_header">
+      <mxGeometry x="160" y="254" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="rs_waktu" value="  waktu"
+            style="text;strokeColor=#c4b5fd;fillColor=#f5f3ff;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="rs_header">
+      <mxGeometry x="0" y="282" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="rs_waktu_type" value="TEXT (YYYY-MM-DD HH:MM:SS)"
+            style="text;strokeColor=#c4b5fd;fillColor=#f5f3ff;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="rs_header">
+      <mxGeometry x="160" y="282" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="rs_note" value="Setiap scraping menghasilkan 1 session + N hasil_scraping"
+            style="text;strokeColor=none;fillColor=#FFFDE7;align=center;verticalAlign=middle;fontSize=9;fontColor=#5f4e00;rounded=1;"
+            vertex="1" parent="rs_header">
+      <mxGeometry x="0" y="324" width="320" height="26" as="geometry" />
+    </mxCell>
+
+    <!-- ══════════════════════════════════════════════
+         TABEL: divisi_access (RBAC)
+         Kolom: id, divisi_asal, divisi_target, can_view
+    ══════════════════════════════════════════════ -->
+
+    <mxCell id="da_header" value="&lt;b&gt;🔐 divisi_access&lt;/b&gt;"
+            style="swimlane;startSize=30;fillColor=#c2410c;strokeColor=#7c2d12;fontColor=#FFFFFF;fontSize=13;fontStyle=1;horizontal=1;rounded=1;arcSize=5;"
+            vertex="1" parent="1">
+      <mxGeometry x="60" y="620" width="320" height="220" as="geometry" />
+    </mxCell>
+
+    <mxCell id="da_id" value="🔑 id"
+            style="text;strokeColor=#7c2d12;fillColor=#fee2e2;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;fontStyle=1;"
+            vertex="1" parent="da_header">
+      <mxGeometry x="0" y="30" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="da_id_type" value="SERIAL PRIMARY KEY"
+            style="text;strokeColor=#7c2d12;fillColor=#fee2e2;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="da_header">
+      <mxGeometry x="160" y="30" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="da_asal" value="  divisi_asal"
+            style="text;strokeColor=#fca5a5;fillColor=#fff1f2;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="da_header">
+      <mxGeometry x="0" y="58" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="da_asal_type" value="TEXT NOT NULL"
+            style="text;strokeColor=#fca5a5;fillColor=#fff1f2;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="da_header">
+      <mxGeometry x="160" y="58" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="da_target" value="  divisi_target"
+            style="text;strokeColor=#7c2d12;fillColor=#FFFFFF;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="da_header">
+      <mxGeometry x="0" y="86" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="da_target_type" value="TEXT NOT NULL"
+            style="text;strokeColor=#7c2d12;fillColor=#FFFFFF;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="da_header">
+      <mxGeometry x="160" y="86" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="da_canview" value="  can_view"
+            style="text;strokeColor=#fca5a5;fillColor=#fff1f2;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="da_header">
+      <mxGeometry x="0" y="114" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="da_canview_type" value="BOOLEAN DEFAULT true"
+            style="text;strokeColor=#fca5a5;fillColor=#fff1f2;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="da_header">
+      <mxGeometry x="160" y="114" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="da_unique" value="UNIQUE (divisi_asal, divisi_target)"
+            style="text;strokeColor=none;fillColor=#FFFDE7;align=center;verticalAlign=middle;fontSize=9;fontColor=#5f4e00;rounded=1;"
+            vertex="1" parent="da_header">
+      <mxGeometry x="0" y="152" width="320" height="26" as="geometry" />
+    </mxCell>
+
+    <mxCell id="da_note" value="sekditjen→dit_ppsa/balai_gakkum | dit_ppsa→balai_gakkum"
+            style="text;strokeColor=none;fillColor=#fff3e0;align=center;verticalAlign=middle;fontSize=9;fontColor=#5f4e00;rounded=1;"
+            vertex="1" parent="da_header">
+      <mxGeometry x="0" y="182" width="320" height="26" as="geometry" />
+    </mxCell>
+
+    <!-- ══════════════════════════════════════════════
+         TABEL: user_activity
+         Kolom: id, username, aktivitas, detail,
+                ip_address, waktu
+    ══════════════════════════════════════════════ -->
+
+    <mxCell id="ua_header" value="&lt;b&gt;📊 user_activity&lt;/b&gt;"
+            style="swimlane;startSize=30;fillColor=#0f766e;strokeColor=#134e4a;fontColor=#FFFFFF;fontSize=13;fontStyle=1;horizontal=1;rounded=1;arcSize=5;"
+            vertex="1" parent="1">
+      <mxGeometry x="900" y="620" width="320" height="250" as="geometry" />
+    </mxCell>
+
+    <mxCell id="ua_id" value="🔑 id"
+            style="text;strokeColor=#134e4a;fillColor=#ccfbf1;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;fontStyle=1;"
+            vertex="1" parent="ua_header">
+      <mxGeometry x="0" y="30" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="ua_id_type" value="SERIAL PRIMARY KEY"
+            style="text;strokeColor=#134e4a;fillColor=#ccfbf1;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="ua_header">
+      <mxGeometry x="160" y="30" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="ua_username" value="🔗 username"
+            style="text;strokeColor=#5eead4;fillColor=#f0fdfa;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;fontStyle=2;"
+            vertex="1" parent="ua_header">
+      <mxGeometry x="0" y="58" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="ua_username_type" value="TEXT NOT NULL (ref users)"
+            style="text;strokeColor=#5eead4;fillColor=#f0fdfa;align=center;verticalAlign=middle;fontSize=10;fontColor=#0f766e;fontStyle=2;"
+            vertex="1" parent="ua_header">
+      <mxGeometry x="160" y="58" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="ua_aktivitas" value="  aktivitas"
+            style="text;strokeColor=#134e4a;fillColor=#FFFFFF;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="ua_header">
+      <mxGeometry x="0" y="86" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="ua_aktivitas_type" value="TEXT NOT NULL"
+            style="text;strokeColor=#134e4a;fillColor=#FFFFFF;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="ua_header">
+      <mxGeometry x="160" y="86" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="ua_detail" value="  detail"
+            style="text;strokeColor=#5eead4;fillColor=#f0fdfa;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="ua_header">
+      <mxGeometry x="0" y="114" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="ua_detail_type" value="TEXT (nullable)"
+            style="text;strokeColor=#5eead4;fillColor=#f0fdfa;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="ua_header">
+      <mxGeometry x="160" y="114" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="ua_ip" value="  ip_address"
+            style="text;strokeColor=#134e4a;fillColor=#FFFFFF;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="ua_header">
+      <mxGeometry x="0" y="142" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="ua_ip_type" value="TEXT"
+            style="text;strokeColor=#134e4a;fillColor=#FFFFFF;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="ua_header">
+      <mxGeometry x="160" y="142" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="ua_waktu" value="  waktu"
+            style="text;strokeColor=#5eead4;fillColor=#f0fdfa;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="ua_header">
+      <mxGeometry x="0" y="170" width="160" height="28" as="geometry" />
+    </mxCell>
+    <mxCell id="ua_waktu_type" value="TEXT NOT NULL"
+            style="text;strokeColor=#5eead4;fillColor=#f0fdfa;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;"
+            vertex="1" parent="ua_header">
+      <mxGeometry x="160" y="170" width="160" height="28" as="geometry" />
+    </mxCell>
+
+    <mxCell id="ua_note" value="Audit trail: Login, Ganti Password, Update Profil, dsb."
+            style="text;strokeColor=none;fillColor=#FFFDE7;align=center;verticalAlign=middle;fontSize=9;fontColor=#5f4e00;rounded=1;"
+            vertex="1" parent="ua_header">
+      <mxGeometry x="0" y="210" width="320" height="26" as="geometry" />
+    </mxCell>
+
+    <!-- ══════════════════════════════════════════════
+         RELASI / FOREIGN KEY LINES
+    ══════════════════════════════════════════════ -->
+
+    <!-- users.username → hasil_scraping.username (1:N) -->
+    <mxCell id="fk_users_hs" value="1 : N&lt;br&gt;ON DELETE SET NULL&lt;br&gt;ON UPDATE CASCADE"
+            style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;
+                   exitX=1;exitY=0.4;exitDx=0;exitDy=0;
+                   entryX=0;entryY=0.3;entryDx=0;entryDy=0;
+                   strokeColor=#1d4ed8;strokeWidth=2.5;fontColor=#1d4ed8;fontSize=10;fontStyle=1;
+                   startArrow=ERone;endArrow=ERmanyToOne;startFill=0;endFill=0;"
+            edge="1" parent="1" source="users_header" target="hs_header">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="420" y="264" />
+          <mxPoint x="450" y="264" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- users.username → riwayat_session.username (1:N) -->
+    <mxCell id="fk_users_rs" value="1 : N&lt;br&gt;ON DELETE SET NULL&lt;br&gt;ON UPDATE CASCADE"
+            style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;
+                   exitX=1;exitY=0.25;exitDx=0;exitDy=0;
+                   entryX=0;entryY=0.3;entryDx=0;entryDy=0;
+                   strokeColor=#7c3aed;strokeWidth=2.5;fontColor=#7c3aed;fontSize=10;fontStyle=1;
+                   startArrow=ERone;endArrow=ERmanyToOne;startFill=0;endFill=0;"
+            edge="1" parent="1" source="users_header" target="rs_header">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="830" y="208" />
+          <mxPoint x="870" y="208" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- users.username → user_activity.username (1:N, logical ref) -->
+    <mxCell id="fk_users_ua" value="1 : N&lt;br&gt;(logical reference)"
+            style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;
+                   exitX=0.5;exitY=1;exitDx=0;exitDy=0;
+                   entryX=0;entryY=0.25;entryDx=0;entryDy=0;
+                   strokeColor=#0f766e;strokeWidth=2.5;fontColor=#0f766e;fontSize=10;fontStyle=1;
+                   startArrow=ERone;endArrow=ERmanyToOne;startFill=0;endFill=0;dashed=1;"
+            edge="1" parent="1" source="users_header" target="ua_header">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="220" y="560" />
+          <mxPoint x="1060" y="560" />
+          <mxPoint x="1060" y="620" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- hasil_scraping.session_id → riwayat_session.session_id (N:1, logical) -->
+    <mxCell id="fk_hs_rs" value="N : 1&lt;br&gt;(session_id)"
+            style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;
+                   exitX=1;exitY=0.2;exitDx=0;exitDy=0;
+                   entryX=0;entryY=0.15;entryDx=0;entryDy=0;
+                   strokeColor=#6b7280;strokeWidth=2;fontColor=#6b7280;fontSize=10;fontStyle=1;
+                   startArrow=ERmanyToOne;endArrow=ERone;startFill=0;endFill=0;dashed=1;"
+            edge="1" parent="1" source="hs_header" target="rs_header">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="830" y="224" />
+          <mxPoint x="870" y="224" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ══════════════════════════════════════════════
+         LEGEND / KETERANGAN
+    ══════════════════════════════════════════════ -->
+    <mxCell id="legend_box" value=""
+            style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#CBD5E1;arcSize=5;"
+            vertex="1" parent="1">
+      <mxGeometry x="480" y="620" width="380" height="230" as="geometry" />
+    </mxCell>
+
+    <mxCell id="legend_title" value="&lt;b&gt;📖 LEGEND / KETERANGAN&lt;/b&gt;"
+            style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=12;"
+            vertex="1" parent="1">
+      <mxGeometry x="480" y="630" width="380" height="26" as="geometry" />
+    </mxCell>
+
+    <mxCell id="leg_pk" value="🔑  PK = Primary Key (SERIAL / AUTO INCREMENT)"
+            style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="1">
+      <mxGeometry x="490" y="662" width="360" height="24" as="geometry" />
+    </mxCell>
+
+    <mxCell id="leg_fk" value="🔗  FK = Foreign Key (reference ke tabel lain)"
+            style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="1">
+      <mxGeometry x="490" y="686" width="360" height="24" as="geometry" />
+    </mxCell>
+
+    <mxCell id="leg_line1" value="━━━  Solid = FK constraint resmi (ON DELETE SET NULL)"
+            style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="1">
+      <mxGeometry x="490" y="710" width="360" height="24" as="geometry" />
+    </mxCell>
+
+    <mxCell id="leg_line2" value="╌╌╌  Dashed = Referensi logis (tidak ada FK constraint)"
+            style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;"
+            vertex="1" parent="1">
+      <mxGeometry x="490" y="734" width="360" height="24" as="geometry" />
+    </mxCell>
+
+    <mxCell id="leg_rbac" value="&lt;b&gt;RBAC Level:&lt;/b&gt;  1=Superadmin | 2=Sekdit | 3=Pengawasan/Pengaduan"
+            style="text;html=1;strokeColor=none;fillColor=#FFF3E0;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;rounded=1;"
+            vertex="1" parent="1">
+      <mxGeometry x="490" y="762" width="360" height="30" as="geometry" />
+    </mxCell>
+
+    <mxCell id="leg_div" value="&lt;b&gt;Divisi:&lt;/b&gt;  sekditjen · dit_ppsa · balai_gakkum"
+            style="text;html=1;strokeColor=none;fillColor=#EDE9FE;align=left;verticalAlign=middle;spacingLeft=10;fontSize=11;rounded=1;"
+            vertex="1" parent="1">
+      <mxGeometry x="490" y="796" width="360" height="30" as="geometry" />
+    </mxCell>
+
+    <!-- ══════════════════════════════════════════════
+         CARDINALITY LABELS
+    ══════════════════════════════════════════════ -->
+    <mxCell id="card_users" value="users (1)"
+            style="text;html=1;strokeColor=none;fillColor=#D8F3DC;align=center;verticalAlign=middle;fontSize=10;fontStyle=1;rounded=1;"
+            vertex="1" parent="1">
+      <mxGeometry x="80" y="130" width="90" height="22" as="geometry" />
+    </mxCell>
+
+    <mxCell id="card_hs" value="hasil_scraping (N)"
+            style="text;html=1;strokeColor=none;fillColor=#dbeafe;align=center;verticalAlign=middle;fontSize=10;fontStyle=1;rounded=1;"
+            vertex="1" parent="1">
+      <mxGeometry x="480" y="130" width="130" height="22" as="geometry" />
+    </mxCell>
+
+    <mxCell id="card_rs" value="riwayat_session (N)"
+            style="text;html=1;strokeColor=none;fillColor=#ede9fe;align=center;verticalAlign=middle;fontSize=10;fontStyle=1;rounded=1;"
+            vertex="1" parent="1">
+      <mxGeometry x="900" y="130" width="140" height="22" as="geometry" />
+    </mxCell>
+
+    <mxCell id="card_da" value="divisi_access (M:N RBAC)"
+            style="text;html=1;strokeColor=none;fillColor=#fee2e2;align=center;verticalAlign=middle;fontSize=10;fontStyle=1;rounded=1;"
+            vertex="1" parent="1">
+      <mxGeometry x="60" y="590" width="150" height="22" as="geometry" />
+    </mxCell>
+
+    <mxCell id="card_ua" value="user_activity (N)"
+            style="text;html=1;strokeColor=none;fillColor=#ccfbf1;align=center;verticalAlign=middle;fontSize=10;fontStyle=1;rounded=1;"
+            vertex="1" parent="1">
+      <mxGeometry x="900" y="590" width="120" height="22" as="geometry" />
+    </mxCell>
+
+  </root>
+</mxGraphModel>

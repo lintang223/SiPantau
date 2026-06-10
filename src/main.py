@@ -2,6 +2,7 @@ import asyncio
 import os
 import signal
 import random
+# pyrefly: ignore [missing-import]
 from playwright.async_api import async_playwright
 
 from config import (

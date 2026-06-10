@@ -5,6 +5,7 @@ __pycache__/
 *.pyc
 node_modules/
 .env
+.env.*
 sipantau-lengkap/sipantau-frontend/node_modules/
 sipantau-lengkap/sipantau-frontend/.next/
 chrome_profile/

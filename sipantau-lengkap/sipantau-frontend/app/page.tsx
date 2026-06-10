@@ -1,8 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Eye, EyeOff, AlertTriangle, LogIn } from 'lucide-react'
+import { Eye, EyeOff, AlertTriangle, LogIn, Lock } from 'lucide-react'
+import { API_URL } from '@/lib/api'
+
+const LOCKOUT_KEY = 'sipantau_lockout_until'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -11,31 +14,132 @@ export default function LoginPage() {
   const [showPass, setShowPass] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [isChecking, setIsChecking] = useState(true)
+  const [lockoutSeconds, setLockoutSeconds] = useState(0)
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
+
+  // ── Cek apakah sudah login — jika iya, redirect ke dashboard ─────────────────
+  // Cek localStorage agar persist lintas tab
+  useEffect(() => {
+    // Jika URL mengandung '?redirect=', artinya middleware Next.js baru saja
+    // menolak user kembali ke sini karena HttpOnly Cookie tidak ada.
+    // Kita hapus localStorage lama agar tidak terjadi infinite redirect loop.
+    if (typeof window !== 'undefined' && window.location.search.includes('redirect=')) {
+      localStorage.removeItem('sipantau_token')
+      localStorage.removeItem('sipantau_auth')
+      localStorage.removeItem('sipantau_user')
+      setIsChecking(false)
+      return
+    }
+
+    const authFlag = localStorage.getItem('sipantau_auth')
+    if (authFlag) {
+      router.replace('/dashboard')
+      return
+    }
+    setIsChecking(false)
+  }, [router])
+
+  // Saat halaman dimuat, cek status blokir ke BACKEND
+  // localStorage dipakai sebagai cache fallback
+  useEffect(() => {
+    const checkLockout = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/auth/lockout-status`)
+        const data = await res.json()
+        if (data.locked && data.remaining_seconds > 0) {
+          setError('Akun diblokir sementara.')
+          startCountdown(data.remaining_seconds)
+        } else {
+          localStorage.removeItem(LOCKOUT_KEY)
+        }
+      } catch {
+        // Backend tidak bisa dicapai, fallback ke localStorage
+        const stored = localStorage.getItem(LOCKOUT_KEY)
+        if (stored) {
+          const remaining = Math.ceil((parseInt(stored) - Date.now()) / 1000)
+          if (remaining > 0) {
+            setError('Akun diblokir sementara.')
+            startCountdown(remaining)
+          } else {
+            localStorage.removeItem(LOCKOUT_KEY)
+          }
+        }
+      }
+    }
+    // Hanya jalankan cek lockout jika belum redirect (auth flag tidak ada)
+    const authFlag = localStorage.getItem('sipantau_auth')
+    if (!authFlag || (typeof window !== 'undefined' && window.location.search.includes('redirect='))) {
+      checkLockout().finally(() => setIsChecking(false))
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+  }, [])
+
+  const startCountdown = (seconds: number) => {
+    setLockoutSeconds(seconds)
+    if (timerRef.current) clearInterval(timerRef.current)
+    timerRef.current = setInterval(() => {
+      setLockoutSeconds(prev => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current!)
+          localStorage.removeItem(LOCKOUT_KEY)
+          setError('')
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+  }
+
+  const startLockout = (seconds: number) => {
+    // Simpan waktu kadaluarsa ke localStorage agar persist saat refresh & lintas tab
+    const until = Date.now() + seconds * 1000
+    localStorage.setItem(LOCKOUT_KEY, String(until))
+    startCountdown(seconds)
+  }
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (lockoutSeconds > 0) return
     setError('')
     setLoading(true)
 
     try {
-      const res = await fetch('http://localhost:8000/api/auth/login', {
+      const res = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Wajib agar browser mau menerima & menyimpan HttpOnly Cookie
         body: JSON.stringify({ username, password })
       })
 
       const data = await res.json()
 
       if (!res.ok) {
-        setError(data.detail || 'Login gagal')
+        if (res.status === 429) {
+          // Parse detik dari pesan backend
+          const match = (data.detail as string).match(/dalam (\d+) detik/)
+          const secs = match ? parseInt(match[1]) : 300
+          startLockout(secs)
+          setError(data.detail || 'Terlalu banyak percobaan. Coba lagi nanti.')
+        } else {
+          setError(data.detail || 'Login gagal')
+        }
         setLoading(false)
         return
       }
 
-      // Simpan info user ke sessionStorage
-      sessionStorage.setItem('sipantau_auth', 'true')
-      sessionStorage.setItem('sipantau_user', JSON.stringify(data.user))
-      router.push('/dashboard')
+      // Simpan info user ke localStorage agar persist lintas tab
+      localStorage.setItem('sipantau_auth', 'true')
+      // Catatan: sipantau_token sekarang dikelola murni via HttpOnly Cookie dari backend
+      localStorage.setItem('sipantau_user', JSON.stringify(data.user))
+      // Set cookie dummy agar middleware bisa proteksi route (bukan token aslinya)
+      document.cookie = `sipantau_auth=1; path=/; max-age=${30 * 24 * 3600}; SameSite=Lax`
+      // Gunakan replace agar halaman login tidak masuk history browser
+      router.replace('/dashboard')
+
+      // Reset loading setelah beberapa saat (jaga-jaga jika diredirect balik oleh middleware)
+      setTimeout(() => setLoading(false), 500)
 
     } catch {
       setError('Tidak bisa terhubung ke server. Pastikan backend jalan.')
@@ -43,9 +147,12 @@ export default function LoginPage() {
     }
   }
 
+  // Selama pengecekan awal (cek token), tampilkan blank agar tidak ada flicker form login
+  if (isChecking) return null
+
   return (
     <>
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         .login-root {
@@ -97,7 +204,7 @@ export default function LoginPage() {
         .btn-login:hover:not(:disabled) { background-position:right center; transform:translateY(-1px); box-shadow:0 8px 20px rgba(27,67,50,0.35); }
         .btn-login:disabled { opacity:0.70; cursor:not-allowed; }
         .footer { font-size:10.5px; color:#d1d5db; text-align:center; margin-top:22px; line-height:1.7; }
-      `}</style>
+      `}} />
 
       <div className="login-root">
         <div className="overlay" />
@@ -117,7 +224,8 @@ export default function LoginPage() {
               <label className="login-label">Username</label>
               <div className="input-wrap">
                 <input className="login-input" type="text" placeholder="Username"
-                  value={username} onChange={e => setUsername(e.target.value)} required autoFocus />
+                  value={username} onChange={e => setUsername(e.target.value)} required autoFocus
+                  disabled={isChecking || lockoutSeconds > 0} />
               </div>
             </div>
 
@@ -125,18 +233,35 @@ export default function LoginPage() {
               <label className="login-label">Password</label>
               <div className="input-wrap">
                 <input className="login-input" type={showPass ? 'text' : 'password'} placeholder="Password"
-                  value={password} onChange={e => setPassword(e.target.value)} required />
-                  <button type="button" className="pw-toggle" onClick={() => setShowPass(!showPass)} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  value={password} onChange={e => setPassword(e.target.value)} required
+                  disabled={isChecking || lockoutSeconds > 0} />
+                  <button type="button" className="toggle-pw" onClick={() => setShowPass(!showPass)} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
                     {showPass ? <EyeOff size={16} color="#9ca3af" /> : <Eye size={16} color="#9ca3af" />}
                   </button>
               </div>
             </div>
 
-            {error && <div className="error-box" style={{ display: "flex", alignItems: "center", gap: ".5rem" }}><span><AlertTriangle size={18} /></span><span>{error}</span></div>}
+            {lockoutSeconds > 0 ? (
+              <div className="error-box" style={{ display: "flex", alignItems: "center", gap: ".5rem", background: "#fff7ed", border: "1px solid #fed7aa", color: "#c2410c" }}>
+                <span><Lock size={18} /></span>
+                <span>Akun diblokir sementara. Coba lagi dalam <strong>{lockoutSeconds}</strong> detik.</span>
+              </div>
+            ) : error ? (
+              <div className="error-box" style={{ display: "flex", alignItems: "center", gap: ".5rem" }}>
+                <span><AlertTriangle size={18} /></span>
+                <span>{error}</span>
+              </div>
+            ) : null}
 
-            <button type="submit" className="btn-login" disabled={loading} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".5rem" }}>
-              {loading ? 'Memverifikasi...' : <><LogIn size={18} /> Masuk</>}
+            <button type="submit" className="btn-login" disabled={isChecking || loading || lockoutSeconds > 0} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".5rem" }}>
+              {isChecking ? 'Memeriksa...' : loading ? 'Memverifikasi...' : lockoutSeconds > 0
+                ? <><Lock size={18} /> Diblokir ({Math.floor(lockoutSeconds / 60)}:{String(lockoutSeconds % 60).padStart(2, '0')})</>
+                : <><LogIn size={18} /> Masuk</>}
             </button>
+
+            <div style={{ marginTop: '1.25rem', textAlign: 'center' }}>
+              <a href="/lupa-password" style={{ fontSize: '13px', color: '#2d8a3e', textDecoration: 'none', fontWeight: 600 }}>Lupa Password?</a>
+            </div>
           </form>
 
           <p className="footer">SiPantau v1.0 &nbsp;·&nbsp; © 2025 KLHK RI</p>

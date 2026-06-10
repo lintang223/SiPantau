@@ -4,6 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { apiFetch, logout as apiLogout } from "@/lib/api";
+import { DIVISI_LABEL_SHORT, DIVISI_COLOR } from "@/lib/constants";
 
 const navItems = [
   { href: "/dashboard",  icon: <LayoutDashboard size={16} />, text: "Dashboard" },
@@ -21,38 +23,28 @@ export type UserSession = {
   can_manage_users: boolean;
   accessible_divisi: string[];
   divisi_color?: string;
-};
-
-const DIVISI_LABEL: Record<string, string> = {
-  superadmin: "Admin",
-  sekdit:     "Sekditjen",
-  pengawasan: "Pengawasan",
-  pengaduan:  "Pengaduan",
+  foto_profil?: string;
 };
 
 export default function Navbar() {
   const pathname = usePathname();
   const router   = useRouter();
-  const [open, setOpen]           = useState(false);
-  const [user, setUser]           = useState<UserSession | null>(null);
-  const [showMenu, setShowMenu]   = useState(false);
-
-  const API = "http://localhost:8000";
+  const [open, setOpen]         = useState(false);
+  const [user, setUser]         = useState<UserSession | null>(null);
+  const [showMenu, setShowMenu] = useState(false);
 
   useEffect(() => {
-    const raw = sessionStorage.getItem("sipantau_user");
+    const raw = localStorage.getItem("sipantau_user");
     if (!raw) return;
-
-    // Tampilkan data lama dulu agar tidak terasa kosong
     const cached: UserSession = JSON.parse(raw);
     setUser(cached);
 
-    // Refresh data terbaru dari backend (silent, no loader)
-    fetch(`${API}/api/auth/me?username=${encodeURIComponent(cached.username)}`)
+    // Refresh dari backend secara silent
+    apiFetch("/api/auth/me")
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (data?.success && data.user) {
-          sessionStorage.setItem("sipantau_user", JSON.stringify(data.user));
+          localStorage.setItem("sipantau_user", JSON.stringify(data.user));
           setUser(data.user);
         }
       })
@@ -60,17 +52,15 @@ export default function Navbar() {
   }, []);
 
   function handleLogout() {
-    sessionStorage.removeItem("sipantau_auth");
-    sessionStorage.removeItem("sipantau_user");
-    router.push("/");
+    apiLogout();
   }
 
-  const divisiColor = user?.divisi_color || "#374151";
-  const divisiLabel = DIVISI_LABEL[user?.divisi || "umum"] || user?.divisi || "";
+  const divisiColor = user?.divisi_color || DIVISI_COLOR[user?.divisi || ""] || "#374151";
+  const divisiLabel = DIVISI_LABEL_SHORT[user?.divisi || ""] || user?.divisi || "";
   const canManage   = user?.can_manage_users === true;
   const navItemsFiltered = navItems.filter(item => {
     if (item.text === "Pengaturan") {
-      return user?.divisi === "superadmin" || user?.divisi === "sekdit";
+      return user?.divisi === "sekditjen" || user?.divisi === "dit_ppsa";
     }
     return true;
   });
@@ -96,7 +86,11 @@ export default function Navbar() {
 
         <div className="t-right" style={{ position: "relative" }}>
           <div className="t-user" onClick={() => setShowMenu(!showMenu)}>
-            <span className="t-user-dot" />
+            {user?.foto_profil ? (
+              <img src={user.foto_profil} alt="Avatar" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid var(--green)' }} />
+            ) : (
+              <span className="t-user-dot" />
+            )}
             <div style={{ lineHeight: 1.25 }}>
               <div style={{ display: "flex", alignItems: "center", gap: ".4rem" }}>
                 {user?.nama || user?.username || "User"}
@@ -122,25 +116,40 @@ export default function Navbar() {
               <div style={{ position: "fixed", inset: 0, zIndex: 9 }} onClick={() => setShowMenu(false)} />
               <div style={{
                 position: "absolute", top: "calc(100% + 10px)", right: 0, zIndex: 10,
-                background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12,
-                boxShadow: "0 8px 28px rgba(0,0,0,.12)", minWidth: 210, overflow: "hidden",
+                background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12,
+                boxShadow: "0 8px 32px rgba(0,0,0,.4)", minWidth: 210, overflow: "hidden", backdropFilter: "blur(12px)"
               }}>
-                <div style={{ padding: ".8rem 1rem", borderBottom: "1px solid #f3f4f6" }}>
-                  <div style={{ fontWeight: 700, fontSize: ".85rem", color: "#111" }}>{user?.nama}</div>
-                  <div style={{ fontSize: ".7rem", color: "#9ca3af" }}>@{user?.username}</div>
-                  <div style={{ marginTop: ".4rem", display: "inline-block", padding: ".15rem .65rem", borderRadius: 999, fontSize: ".68rem", fontWeight: 700, background: divisiColor, color: "#fff" }}>
-                    {divisiLabel}
+                <div style={{ padding: ".8rem 1rem", borderBottom: "1px solid var(--border)", display: 'flex', alignItems: 'center', gap: '.8rem' }}>
+                  {user?.foto_profil && (
+                    <img src={user.foto_profil} alt="Avatar" style={{ width: 42, height: 42, borderRadius: '50%', objectFit: 'cover' }} />
+                  )}
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: ".85rem", color: "var(--ink)" }}>{user?.nama}</div>
+                    <div style={{ fontSize: ".7rem", color: "var(--ink3)" }}>@{user?.username}</div>
+                    <div style={{ marginTop: ".4rem", display: "inline-block", padding: ".15rem .65rem", borderRadius: 999, fontSize: ".68rem", fontWeight: 700, background: divisiColor, color: "#fff" }}>
+                      {divisiLabel}
+                    </div>
                   </div>
                 </div>
-                <Link href="/ganti-password" style={{ display: "flex", alignItems: "center", gap: ".5rem", padding: ".65rem 1rem", fontSize: ".82rem", color: "#374151" }} onClick={() => setShowMenu(false)}>
-                  <Lock size={15} /> Ganti Password
+                <Link href="/profil" style={{ display: "flex", alignItems: "center", gap: ".5rem", padding: ".65rem 1rem", fontSize: ".82rem", color: "var(--ink2)" }} onClick={() => setShowMenu(false)}>
+                  <Lock size={15} /> Profil & Keamanan
                 </Link>
                 {canManage && (
-                  <Link href="/kelola-user" style={{ display: "flex", alignItems: "center", gap: ".5rem", padding: ".65rem 1rem", fontSize: ".82rem", color: "#374151" }} onClick={() => setShowMenu(false)}>
-                    <Users size={15} /> Kelola User
-                  </Link>
+                  <>
+                    <Link href="/kelola-user" style={{ display: "flex", alignItems: "center", gap: ".5rem", padding: ".65rem 1rem", fontSize: ".82rem", color: "var(--ink2)" }} onClick={() => setShowMenu(false)}>
+                      <Users size={15} /> Kelola User
+                    </Link>
+                    <Link href="/riwayat-aktivitas" style={{ display: "flex", alignItems: "center", gap: ".5rem", padding: ".65rem 1rem", fontSize: ".82rem", color: "var(--ink2)" }} onClick={() => setShowMenu(false)}>
+                      <FolderClock size={15} /> Riwayat Aktivitas User
+                    </Link>
+                    {user?.divisi === "sekditjen" && (
+                      <Link href="/riwayat-login" style={{ display: "flex", alignItems: "center", gap: ".5rem", padding: ".65rem 1rem", fontSize: ".82rem", color: "var(--ink2)" }} onClick={() => setShowMenu(false)}>
+                        <Search size={15} /> Log Login
+                      </Link>
+                    )}
+                  </>
                 )}
-                <div style={{ height: 1, background: "#f3f4f6" }} />
+                <div style={{ height: 1, background: "var(--border)" }} />
                 <button onClick={handleLogout} style={{ width: "100%", display: "flex", alignItems: "center", gap: ".5rem", padding: ".65rem 1rem", fontSize: ".82rem", color: "#dc2626", background: "none", border: "none", cursor: "pointer" }}>
                   <LogOut size={15} /> Keluar
                 </button>
@@ -174,8 +183,16 @@ export default function Navbar() {
                 </div>
               ))}
               <div style={{ height: 1, background: "rgba(255,255,255,.1)", margin: ".6rem 0" }} />
-              <div className="ditem" onClick={() => { router.push("/ganti-password"); setOpen(false); }} style={{ display: "flex", alignItems: "center", gap: ".5rem" }}><Lock size={16} /> Ganti Password</div>
-              {canManage && <div className="ditem" onClick={() => { router.push("/kelola-user"); setOpen(false); }} style={{ display: "flex", alignItems: "center", gap: ".5rem" }}><Users size={16} /> Kelola User</div>}
+              <div className="ditem" onClick={() => { router.push("/profil"); setOpen(false); }} style={{ display: "flex", alignItems: "center", gap: ".5rem" }}><Lock size={16} /> Profil & Keamanan</div>
+              {canManage && (
+                <>
+                  <div className="ditem" onClick={() => { router.push("/kelola-user"); setOpen(false); }} style={{ display: "flex", alignItems: "center", gap: ".5rem" }}><Users size={16} /> Kelola User</div>
+                  <div className="ditem" onClick={() => { router.push("/riwayat-aktivitas"); setOpen(false); }} style={{ display: "flex", alignItems: "center", gap: ".5rem" }}><FolderClock size={16} /> Riwayat Aktivitas</div>
+                  {user?.divisi === "sekditjen" && (
+                    <div className="ditem" onClick={() => { router.push("/riwayat-login"); setOpen(false); }} style={{ display: "flex", alignItems: "center", gap: ".5rem" }}><Search size={16} /> Log Login</div>
+                  )}
+                </>
+              )}
               <div style={{ height: 1, background: "rgba(255,255,255,.1)", margin: ".6rem 0" }} />
               <div className="ditem" style={{ color: "#fca5a5", display: "flex", alignItems: "center", gap: ".5rem" }} onClick={handleLogout}><LogOut size={16} /> Keluar</div>
             </nav>

@@ -10,14 +10,14 @@ export default function AksesDitolakPage() {
 
   useEffect(() => {
     // If not logged in at all, redirect to login
-    if (!sessionStorage.getItem('sipantau_auth')) {
+    if (!localStorage.getItem('sipantau_auth')) {
       router.push('/')
     }
   }, [router])
 
   return (
     <>
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .denied-root {
           min-height: 100vh;
           display: flex;
@@ -108,7 +108,7 @@ export default function AksesDitolakPage() {
           gap: .4rem;
         }
         .btn-outline:hover { border-color: #9ca3af; color: #111827; }
-      `}</style>
+      `}} />
 
       <div className="denied-root">
         <div className="denied-card">
