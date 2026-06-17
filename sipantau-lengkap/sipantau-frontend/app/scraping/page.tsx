@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { Settings, Activity, ClipboardList, AlertTriangle, CheckCircle, Search, FolderOpen, Trash2, Download } from "lucide-react";
-import { API_URL } from "@/lib/api";
+import { API_URL, AGENT_URL } from "@/lib/api";
 
 type Produk = {
   nama: string;
@@ -78,7 +78,7 @@ export default function ScrapingPage() {
     // Cek status agent setiap 3 detik
     const checkAgent = async () => {
       try {
-        const res = await fetch('http://localhost:7777/ping');
+        const res = await fetch(`${AGENT_URL}/ping`);
         if (res.ok) {
           const data = await res.json();
           setAgentActive(true);
@@ -121,7 +121,7 @@ export default function ScrapingPage() {
     // Jika sudah ada jobId (dari restore) dan masih loading, mulai polling lagi
     const intv = setInterval(async () => {
       try {
-        const statusRes = await fetch(`http://localhost:7777/status/${agentJobId}`);
+        const statusRes = await fetch(`${AGENT_URL}/status/${agentJobId}`);
         if (!statusRes.ok) return;
         const statusData = await statusRes.json();
         setProg(prev => ({ ...prev, tokopedia: Math.min(statusData.total * 5, 95) }));
@@ -141,7 +141,7 @@ export default function ScrapingPage() {
             return;
           }
           setProg(prev => ({ ...prev, tokopedia: 100 }));
-          const resultRes  = await fetch(`http://localhost:7777/results/${agentJobId}`);
+          const resultRes  = await fetch(`${AGENT_URL}/results/${agentJobId}`);
           const resultData = await resultRes.json();
           const mapped: Produk[] = (resultData.results || []).map((r: Record<string, unknown>) => ({
             nama:     r.nama_produk  as string,
@@ -190,7 +190,7 @@ export default function ScrapingPage() {
       for (const plat of selected) {
         try {
           addLog(`[${plat.toUpperCase()}] Memulai Agent...`, "info");
-          const res = await fetch("http://localhost:7777/scrape", {
+          const res = await fetch(`${AGENT_URL}/scrape`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -217,7 +217,7 @@ export default function ScrapingPage() {
           while (!isDone) {
             await new Promise(resolve => setTimeout(resolve, 3000));
             try {
-              const statusRes = await fetch(`http://localhost:7777/status/${jobId}`);
+              const statusRes = await fetch(`${AGENT_URL}/status/${jobId}`);
               if (!statusRes.ok) continue;
               const statusData = await statusRes.json();
               
@@ -241,7 +241,7 @@ export default function ScrapingPage() {
                 }
 
                 setProg(prev => ({ ...prev, [plat]: 100 }));
-                const resultRes = await fetch(`http://localhost:7777/results/${jobId}`);
+                const resultRes = await fetch(`${AGENT_URL}/results/${jobId}`);
                 const resultData = await resultRes.json();
                 
                 addLog(`✅ Selesai ${plat.toUpperCase()} — ${resultData.total} produk ditemukan`, "ok");
@@ -296,7 +296,10 @@ export default function ScrapingPage() {
           }),
         });
 
-        if (!res.ok) throw new Error("Gagal terhubung ke backend");
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.detail || "Gagal terhubung ke backend");
+        }
         const data = await res.json();
 
         const newProg = { ...prog };
@@ -319,8 +322,8 @@ export default function ScrapingPage() {
         setResults(mapped);
         setFileExcel(data.file_excel || "");
         setDone(true);
-      } catch {
-        addLog("❌ Tidak bisa terhubung ke backend. Pastikan main.py berjalan.", "warn");
+      } catch (err: any) {
+        addLog(`❌ ${err.message || "Tidak bisa terhubung ke backend"}`, "warn");
       } finally {
         setLoading(false);
       }
@@ -461,7 +464,7 @@ export default function ScrapingPage() {
                     type="button"
                     onClick={async () => {
                       try {
-                        const res = await fetch("http://localhost:7777/open-output-folder");
+                        const res = await fetch(`${AGENT_URL}/open-output-folder`);
                         if (!res.ok) alert("Gagal membuka folder. Pastikan SiPantau_Agent berjalan.");
                       } catch {
                         alert("Gagal terhubung ke Agent.");
@@ -538,7 +541,7 @@ export default function ScrapingPage() {
                 )}
                 {agentJobId && done && (
                   <a
-                    href={`http://localhost:7777/download/${agentJobId}`}
+                    href={`${AGENT_URL}/download/${agentJobId}`}
                     className="btn-sm"
                     style={{ display: "inline-flex", alignItems: "center", gap: ".3rem", textDecoration: "none", background: "var(--green)", color: "white", border: "1px solid var(--green)" }}
                     target="_blank" rel="noopener noreferrer"

@@ -132,9 +132,7 @@ def validate_input(value: str, field_name: str, max_length: int = 100) -> str:
         raise HTTPException(status_code=400, detail=f"{field_name} tidak boleh kosong")
     if len(value) > max_length:
         raise HTTPException(status_code=400, detail=f"{field_name} terlalu panjang (maks {max_length} karakter)")
-    for d in ["'", '"', ";", "--", "/*", "*/", "xp_", "exec", "drop", "truncate"]:
-        if d.lower() in value.lower():
-            raise HTTPException(status_code=400, detail=f"{field_name} mengandung karakter tidak valid")
+    # SQLi protection is handled by parameterized queries. Blacklist is removed.
     return value.strip()
 
 # ── Password Hashing (bcrypt) ─────────────────────────────────────────────────
@@ -938,25 +936,9 @@ def get_stats(
 # ── Scraping ──────────────────────────────────────────────────────────────────
 @app.post("/api/scrape")
 async def scrape(req: ScrapeRequest, current_user: dict = Depends(get_current_user)):
-    session_id  = datetime.now().strftime("%Y%m%d_%H%M%S")
-    username    = current_user["sub"]
-    all_results = []
-    for platform in req.platforms:
-        try:
-            results = generate_placeholder(platform, req.keyword, req.max_pages)
-            waktu   = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            for r in results:
-                r["waktu_scrape"] = waktu
-                r["session_id"]   = session_id
-            all_results.extend(results)
-        except Exception as e:
-            logger.error(f"Error scraping {platform}: {e}")
-    save_to_db(all_results, session_id, req.keyword, req.platforms, username)
-    filename = export_to_excel_file(all_results, req.keyword, session_id, req.harga_threshold)
-    return {
-        "session_id": session_id, "keyword": req.keyword,
-        "total": len(all_results), "results": all_results, "file_excel": filename
-    }
+    # Backend fallback disabled to prevent dummy data generation. 
+    # Frontend will receive 503 and prompt user to run local agent.
+    raise HTTPException(status_code=503, detail="Agent tidak aktif, pemantauan otomatis tidak tersedia. Harap jalankan SiPantau_Agent.exe")
 
 @app.post("/api/scrape/results")
 def receive_scrape_results(req: ScrapeResultsRequest, current_user: dict = Depends(get_current_user)):
@@ -994,15 +976,25 @@ def download_excel(filename: str, current_user: dict = Depends(get_current_user)
 def save_to_db(results, session_id, keyword, platforms, username="unknown"):
     with get_conn() as conn:
         cur = conn.cursor()
-        for r in results:
-            cur.execute(
-                """INSERT INTO hasil_scraping
-                   (session_id,username,keyword,nama_produk,harga,platform,rating,terjual,url_produk,gambar_url,waktu_scrape)
-                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-                (session_id, username, keyword, r.get("nama_produk",""), r.get("harga",0),
-                 r.get("platform",""), r.get("rating",0), r.get("terjual",""),
-                 r.get("url_produk",""), r.get("gambar_url",""), r.get("waktu_scrape",""))
-            )
+        from psycopg2.extras import execute_values
+        
+        insert_query = """
+            INSERT INTO hasil_scraping
+            (session_id,username,keyword,nama_produk,harga,platform,rating,terjual,url_produk,gambar_url,waktu_scrape)
+            VALUES %s
+        """
+        
+        data_to_insert = [
+            (
+                session_id, username, keyword, r.get("nama_produk", ""), r.get("harga", 0),
+                r.get("platform", ""), r.get("rating", 0), r.get("terjual", ""),
+                r.get("url_produk", ""), r.get("gambar_url", ""), r.get("waktu_scrape", "")
+            ) for r in results
+        ]
+        
+        if data_to_insert:
+            execute_values(cur, insert_query, data_to_insert)
+
         cur.execute(
             """INSERT INTO riwayat_session (session_id,username,keyword,platforms,jumlah_data,status,waktu)
                VALUES (%s,%s,%s,%s,%s,%s,%s)""",
@@ -1065,15 +1057,7 @@ def export_to_excel_file(results, keyword, session_id, harga_threshold=350000):
     wb.save(filepath)
     return filename
 
-def generate_placeholder(platform, keyword, max_pages):
-    import random
-    produk = [f"Kayu Jati {keyword}", f"Bambu {keyword}", f"Rotan {keyword}",
-              f"Madu Hutan {keyword}", f"Gaharu {keyword}", f"Kayu Sengon {keyword}"]
-    return [{"nama_produk": random.choice(produk)+f" #{random.randint(1,99)}",
-             "harga": random.randint(10000,500000), "platform": platform.capitalize(),
-             "rating": round(random.uniform(3.0,5.0),1), "terjual": f"{random.randint(1,500)}rb+",
-             "url_produk": f"https://{platform}.co.id/produk/{keyword.replace(' ','-')}",
-             "gambar_url": ""} for _ in range(max_pages*10)]
+# generate_placeholder removed as backend no longer creates dummy data
 
 if __name__ == "__main__":
     import uvicorn
