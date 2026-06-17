@@ -366,16 +366,27 @@ def init_db():
                 (asal, target)
             )
 
-        # Default admin
+        # Default admin — password dari env var, TIDAK hardcoded di source code
         cur.execute("SELECT COUNT(*) FROM users WHERE username='admin'")
         if cur.fetchone()[0] == 0:
+            import secrets, string
+            _admin_pw = os.getenv("ADMIN_DEFAULT_PASSWORD", "")
+            if not _admin_pw:
+                # Tidak ada di .env — generate password acak yang aman
+                _chars    = string.ascii_letters + string.digits + "!@#$%"
+                _admin_pw = "".join(secrets.choice(_chars) for _ in range(16))
+                logger.warning("="*60)
+                logger.warning("ADMIN DEFAULT PASSWORD (hanya tampil sekali):")
+                logger.warning(f"  username : admin")
+                logger.warning(f"  password : {_admin_pw}")
+                logger.warning("Salin ke .env: ADMIN_DEFAULT_PASSWORD=<password>")
+                logger.warning("="*60)
             cur.execute(
                 """INSERT INTO users (username,password,nama,divisi,level,can_export,can_manage_users,created_at)
                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s)""",
-                ("admin", hash_pw("klhk2025"), "Administrator",
+                ("admin", hash_pw(_admin_pw), "Administrator",
                  "sekditjen", 1, True, True, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
             )
-            print("Akun admin default dibuat: username=admin / password=klhk2025")
 
         # Sync level
         cur.execute("SELECT username, divisi FROM users WHERE level IS NULL OR level = 0")
@@ -509,19 +520,20 @@ def login(req: LoginRequest, request: Request, response: Response):
 
     logger.info(f"Login berhasil: {username_clean} dari IP {ip}")
     
-    # Set HttpOnly Cookie
+    # Set HttpOnly Cookie — token TIDAK dikirim di response body (cegah akses dari JS)
     response.set_cookie(
         key="sipantau_token",
         value=token,
         httponly=True,
         max_age=JWT_EXPIRE_HRS * 3600,
-        samesite="lax", # Atau "none" jika beda domain (butuh secure=True)
-        secure=False,   # Ubah ke True jika sudah menggunakan HTTPS
+        samesite="lax", # Ganti ke "none" jika beda domain (wajib secure=True)
+        secure=False,   # Ubah ke True jika sudah pakai HTTPS
     )
-    
+
     return {
         "success": True,
-        "token":   token, # Opsional: Disimpan sementara agar kompatibel
+        # Token SENGAJA tidak dikembalikan di sini.
+        # Auth sepenuhnya via HttpOnly Cookie yang tidak bisa dibaca JS.
         "user": {
             "username":          user["username"],
             "nama":              user["nama"],

@@ -14,15 +14,22 @@ export const AGENT_URL = isServer
   ? (process.env.NEXT_PUBLIC_AGENT_URL || "http://127.0.0.1:7777").replace("localhost", "127.0.0.1")
   : (process.env.NEXT_PUBLIC_AGENT_URL || "http://localhost:7777").replace("127.0.0.1", "localhost");
 
-/** Ambil token dari localStorage */
+/**
+ * @deprecated Token sekarang dikelola murni via HttpOnly Cookie dari backend.
+ * Fungsi ini dipertahankan hanya untuk kompatibilitas, tapi tidak digunakan untuk auth.
+ */
 export function getToken(): string {
   if (typeof window === "undefined") return "";
   return localStorage.getItem("sipantau_token") || "";
 }
 
-/** Simpan token ke localStorage */
+/**
+ * @deprecated Tidak perlu menyimpan token di localStorage lagi.
+ * Auth dikelola murni via HttpOnly Cookie.
+ */
 export function saveToken(token: string) {
-  localStorage.setItem("sipantau_token", token);
+  // No-op: token tidak lagi disimpan di localStorage (risiko XSS)
+  void token;
 }
 
 /** Hapus semua auth data dan redirect ke login */
@@ -33,33 +40,35 @@ export function logout() {
     credentials: 'include'
   }).catch(e => console.error("Gagal logout backend:", e));
 
-  localStorage.removeItem("sipantau_token");
+  // Bersihkan data sesi dari localStorage
   localStorage.removeItem("sipantau_auth");
   localStorage.removeItem("sipantau_user");
-  // Hapus cookie middleware
+  // sipantau_token di localStorage sudah tidak dipakai, tapi hapus juga untuk kebersihan
+  localStorage.removeItem("sipantau_token");
+
+  // Hapus cookie dummy middleware
   if (typeof document !== "undefined") {
     document.cookie = "sipantau_auth=; path=/; max-age=0";
-    document.cookie = "sipantau_token=; path=/; max-age=0";
   }
   if (typeof window !== "undefined") window.location.href = "/";
 }
 
 /**
- * Wrapper fetch yang otomatis menambahkan Authorization header.
+ * Wrapper fetch yang otomatis mengirim credentials (HttpOnly Cookie).
+ * Auth TIDAK lagi menggunakan Authorization: Bearer header —
+ * token dikelola murni via HttpOnly Cookie sehingga tidak bisa diakses JS (anti-XSS).
  * Jika response 401, clear session dan redirect ke login.
  */
 export async function apiFetch(path: string, options: RequestInit = {}): Promise<Response> {
-  const token = getToken();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(options.headers as Record<string, string> || {}),
   };
 
-  const res = await fetch(`${API_URL}${path}`, { 
-    ...options, 
+  const res = await fetch(`${API_URL}${path}`, {
+    ...options,
     headers,
-    credentials: "include" // Wajib agar HttpOnly cookie selalu dikirim ke backend
+    credentials: "include", // Wajib agar HttpOnly Cookie selalu dikirim ke backend
   });
 
   if (res.status === 401) {
