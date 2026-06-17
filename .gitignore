@@ -6,6 +6,9 @@ __pycache__/
 node_modules/
 .env
 .env.*
+!.env.example
+!**/.env.local.example
+!**/.env.example
 sipantau-lengkap/sipantau-frontend/node_modules/
 sipantau-lengkap/sipantau-frontend/.next/
 chrome_profile/
