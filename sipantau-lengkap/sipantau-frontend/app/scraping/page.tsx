@@ -444,9 +444,6 @@ export default function ScrapingPage() {
                   <span style={{ fontSize: ".72rem", color: "var(--ink3)", fontStyle: "italic" }}>Platform eksklusif</span>
                 </div>
               </div>
-
-              <button
-                type="submit"
               <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
                 <button
                   type="submit"
