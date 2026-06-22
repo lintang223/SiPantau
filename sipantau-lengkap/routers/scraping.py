@@ -1,5 +1,5 @@
 import os
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse
 import pandas as pd
 
@@ -15,10 +15,32 @@ async def scrape(req: ScrapeRequest, current_user: dict = Depends(get_current_us
     raise HTTPException(status_code=503, detail="Agent tidak aktif, pemantauan otomatis tidak tersedia. Harap jalankan SiPantau_Agent.exe")
 
 @router.post("/scrape/results")
-def receive_scrape_results(req: ScrapeResultsRequest, current_user: dict = Depends(get_current_user)):
-    save_to_db(req.results, req.session_id, req.keyword, req.platforms, req.username)
+def receive_scrape_results(req: ScrapeResultsRequest, request: Request):
+    # Agent lokal (localhost) tidak butuh token JWT
+    client_host = (request.client.host if request.client else "")
+    is_local    = client_host in ("127.0.0.1", "::1", "localhost")
+    if not is_local:
+        # Jika dari luar, kita validasi token secara manual
+        get_current_user(request)
+
     filename = export_to_excel_file(req.results, req.keyword, req.session_id, req.harga_threshold)
+    save_to_db(req.results, req.session_id, req.keyword, req.platforms, req.username, file_excel=filename)
     return {"success": True, "message": f"{len(req.results)} data disimpan", "file_excel": filename}
+
+@router.get("/scraped-urls")
+def get_scraped_urls():
+    """Mengambil daftar URL produk yang sudah pernah di-scrap, agar agent bisa skip duplicate."""
+    try:
+        with get_conn() as conn:
+            cur = conn.cursor()
+            # Ambil semua URL produk yang ada di database
+            cur.execute("SELECT url_produk FROM hasil_scraping")
+            urls = [row[0] for row in cur.fetchall()]
+            cur.close()
+            return {"urls": urls}
+    except Exception as e:
+        print("Error fetch scraped-urls:", e)
+        return {"urls": []}
 
 @router.post("/export")
 def export_excel(req: ExportRequest, current_user: dict = Depends(get_current_user)):

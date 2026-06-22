@@ -447,42 +447,69 @@ export default function ScrapingPage() {
 
               <button
                 type="submit"
-                className="btn-green"
-                disabled={loading || (agentActive && !browserReady)}
-                style={{ minWidth: 180 }}
-                title={agentActive && !browserReady ? browserMessage : ""}
-              >
-                {loading
-                    ? <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}><Search size={16} className="animate-spin" /> Sedang memantau...</span>
-                    : agentActive && !browserReady
-                    ? <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}><Search size={16} className="animate-spin" /> Menyiapkan browser...</span>
-                    : <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}><Search size={16} /> Mulai Pemantauan</span>}
-              </button>
-              {(done || results.length > 0) && !loading && (
-                <>
+              <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
+                <button
+                  type="submit"
+                  className="btn-green"
+                  disabled={loading || (agentActive && !browserReady)}
+                  style={{ minWidth: 180 }}
+                  title={agentActive && !browserReady ? browserMessage : ""}
+                >
+                  {loading
+                      ? <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}><Search size={16} className="animate-spin" /> Sedang memantau...</span>
+                      : agentActive && !browserReady
+                      ? <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}><Search size={16} className="animate-spin" /> Menyiapkan browser...</span>
+                      : <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}><Search size={16} /> Mulai Pemantauan</span>}
+                </button>
+
+                {loading && agentJobId && (
                   <button
                     type="button"
                     onClick={async () => {
                       try {
-                        const res = await fetch(`${AGENT_URL}/open-output-folder`);
-                        if (!res.ok) alert("Gagal membuka folder. Pastikan SiPantau_Agent berjalan.");
-                      } catch {
+                        const res = await fetch(`${AGENT_URL}/cancel/${agentJobId}`, { method: "POST" });
+                        if (res.ok) {
+                          setLoading(false);
+                          setDone(true);
+                        } else {
+                          alert("Gagal membatalkan pemantauan.");
+                        }
+                      } catch (e) {
                         alert("Gagal terhubung ke Agent.");
                       }
                     }}
-                    style={{ marginLeft: ".75rem", padding: ".55rem 1rem", border: "1px solid var(--green)", borderRadius: 6, background: "var(--green-pale)", cursor: "pointer", fontSize: ".85rem", color: "var(--green)", fontWeight: 600 }}
+                    style={{ padding: ".65rem 1.3rem", borderRadius: 6, background: "rgba(239, 68, 68, 0.15)", border: "1px solid #ef4444", color: "#fca5a5", cursor: "pointer", fontWeight: 700, fontSize: ".875rem", transition: "all 0.2s" }}
                   >
-                    <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}><FolderOpen size={16} /> Buka Folder Hasil (Screenshot)</span>
+                    <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}><AlertTriangle size={16} /> Batalkan Pemantauan</span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={handleReset}
-                    style={{ marginLeft: ".75rem", padding: ".55rem 1rem", border: "1px solid var(--border-mid)", borderRadius: 6, background: "transparent", cursor: "pointer", fontSize: ".85rem", color: "var(--ink2)" }}
-                  >
-                    <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}><Trash2 size={16} /> Bersihkan</span>
-                  </button>
-                </>
-              )}
+                )}
+
+                {(done || results.length > 0) && !loading && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(`${AGENT_URL}/open-output-folder`);
+                          if (!res.ok) alert("Gagal membuka folder. Pastikan SiPantau_Agent berjalan.");
+                        } catch {
+                          alert("Gagal terhubung ke Agent.");
+                        }
+                      }}
+                      style={{ padding: ".55rem 1rem", border: "1px solid #4ade80", borderRadius: 6, background: "rgba(74,222,128,0.15)", cursor: "pointer", fontSize: ".85rem", color: "#86efac", fontWeight: 600 }}
+                    >
+                      <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}><FolderOpen size={16} /> Buka Folder Hasil (Screenshot)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleReset}
+                      style={{ padding: ".55rem 1rem", border: "1px solid rgba(255,255,255,0.4)", borderRadius: 6, background: "rgba(255,255,255,0.05)", cursor: "pointer", fontSize: ".85rem", color: "#fff", fontWeight: 600 }}
+                    >
+                      <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}><Trash2 size={16} /> Bersihkan</span>
+                    </button>
+                  </>
+                )}
+              </div>
             </form>
           </div>
         </div>
@@ -527,17 +554,32 @@ export default function ScrapingPage() {
             <div className="card-head">
               <h2 style={{ display: "flex", alignItems: "center", gap: ".5rem" }}><ClipboardList size={20} /> Hasil Pemantauan</h2>
               <div style={{ display: "flex", alignItems: "center", gap: ".5rem" }}>
-                <span style={{ fontSize: ".72rem", fontWeight: 700, padding: ".2rem .65rem", borderRadius: 99, background: "var(--green-light)", color: "var(--green)", border: "1px solid var(--border-mid)" }}>
+                <span style={{ fontSize: ".72rem", fontWeight: 700, padding: ".2rem .65rem", borderRadius: 99, background: "rgba(74,222,128,0.15)", color: "#86efac", border: "1px solid #4ade80" }}>
                   {results.length} listing
                 </span>
                 {fileExcel && (
-                  <a
-                    href={`${API_URL}/api/export/download/${fileExcel}`}
+                  <button
+                    onClick={async () => {
+                      try {
+                        const res = await fetch(`${API_URL}/api/export/download/${fileExcel}`);
+                        if (!res.ok) throw new Error("Gagal mengunduh");
+                        const blob = await res.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = fileExcel;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                      } catch (e) {
+                        alert("Gagal mengunduh excel");
+                      }
+                    }}
                     className="btn-sm"
-                    style={{ display: "inline-flex", alignItems: "center", gap: ".3rem", textDecoration: "none" }}
+                    style={{ display: "inline-flex", alignItems: "center", gap: ".3rem", border: "none", cursor: "pointer" }}
                   >
-                    <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}><Download size={14} /> Unduh Excel (Server)</span>
-                  </a>
+                    <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}><Download size={14} /> Unduh Excel (Lokal)</span>
+                  </button>
                 )}
                 {agentJobId && done && (
                   <a

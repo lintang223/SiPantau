@@ -321,11 +321,14 @@ async def scrape_all_pages(
     browser=None, context_ref: list = None,
     is_cdp: bool = False,
     target_product_count: int = 0,
-    harga_threshold: int = 0
+    harga_threshold: int = 0,
+    skipped_urls: set = None
 ) -> tuple[list[dict], object, object]:
 
     all_products   = []
     seen_links     = set()
+    if skipped_urls:
+        seen_links.update(skipped_urls)  # pre-seed seen_links agar URL lama otomatis di-skip
     load_count     = 0
     throttle_count = 0
     page_num       = 1
@@ -392,6 +395,13 @@ async def scrape_all_pages(
 
         before    = len(all_products)
         new_prods = await scroll_and_extract(page, keyword, seen_links)
+
+        # Skip produk yang sudah ada di database
+        if skipped_urls:
+            before_skip = len(new_prods)
+            new_prods = [p for p in new_prods if p.get("link") not in skipped_urls]
+            if before_skip - len(new_prods) > 0:
+                print(f"      ⏩ {before_skip - len(new_prods)} produk di-skip (sudah ada di database)")
 
         effective_threshold = harga_threshold if harga_threshold > 0 else HARGA_THRESHOLD
         if effective_threshold > 0:
@@ -576,7 +586,8 @@ async def scrape_all_pages_shopee(
     browser=None, context_ref: list = None,
     is_cdp: bool = False,
     target_product_count: int = 0,
-    harga_threshold: int = 0
+    harga_threshold: int = 0,
+    skipped_urls: set = None
 ) -> tuple[list[dict], object, object]:
     """Scrape Shopee menggunakan Network Response Interception.
     
@@ -588,6 +599,8 @@ async def scrape_all_pages_shopee(
     """
     all_products   = []
     seen_links     = set()
+    if skipped_urls:
+        seen_links.update(skipped_urls)  # pre-seed agar URL lama otomatis di-skip
     page_num       = 0   # Shopee page index mulai dari 0
     limit          = 60  # Shopee default 60 item per halaman
     max_p          = MAX_LOAD_MORE if MAX_LOAD_MORE > 0 else 5
@@ -728,6 +741,13 @@ async def scrape_all_pages_shopee(
 
         before    = len(all_products)
         new_prods = _parse_shopee_api_items(api_data, keyword, seen_links)
+
+        # Skip produk yang sudah ada di database
+        if skipped_urls:
+            before_skip = len(new_prods)
+            new_prods = [p for p in new_prods if p.get("link") not in skipped_urls]
+            if before_skip - len(new_prods) > 0:
+                print(f"      ⏩ {before_skip - len(new_prods)} produk di-skip (sudah ada di database)")
 
         # Filter new_prods
         effective_threshold = harga_threshold if harga_threshold > 0 else HARGA_THRESHOLD

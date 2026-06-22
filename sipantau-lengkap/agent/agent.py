@@ -176,6 +176,7 @@ class StartScrapeRequest(BaseModel):
     harga_threshold: int = 350000
     username:    str    = "unknown"
     backend_url: str    = ""      # URL backend SiPantau untuk kirim hasil
+    token:       str    = ""
 
 class CancelRequest(BaseModel):
     job_id: str
@@ -234,6 +235,7 @@ async def start_scrape(req: StartScrapeRequest):
         "harga_threshold": req.harga_threshold,
         "username":    req.username,
         "backend_url": req.backend_url,
+        "token":       req.token,
         "total":       0,
         "message":     "Antri — menunggu giliran...",
         "results":     [],
@@ -313,15 +315,26 @@ def open_output_folder():
 
 @app.post("/cancel/{job_id}")
 def cancel_job(job_id: str):
-    """Batalkan job yang sedang antri (tidak bisa batalkan yang sedang running)."""
+    """Batalkan job yang sedang antri atau paksa stop yang sedang running."""
     if job_id not in jobs:
         raise HTTPException(status_code=404, detail="Job tidak ditemukan")
     job = jobs[job_id]
+    
     if job["status"] == "running":
-        raise HTTPException(status_code=400, detail="Tidak bisa batalkan job yang sedang berjalan")
-    if job["status"] == "queued":
+        job["status"] = "cancelled"
+        job["message"] = "Dihentikan paksa oleh user."
+        # Coba tutup browser jika ada
+        if "_browser" in job and job["_browser"]:
+            try:
+                # Karena ini fungsi sinkron, kita buat task untuk close
+                loop = asyncio.get_event_loop()
+                loop.create_task(job["_browser"].close())
+            except Exception as e:
+                print("Gagal close browser saat cancel:", e)
+    elif job["status"] == "queued":
         job["status"] = "cancelled"
         job["message"] = "Dibatalkan oleh user"
+        
     return {"job_id": job_id, "status": job["status"]}
 
 @app.get("/jobs")
@@ -596,6 +609,7 @@ async def _run_scrape_job(job_id: str):
                     )
 
             if browser.contexts:
+                job["_browser"] = browser
                 context = browser.contexts[0]
                 page    = await context.new_page()
                 page.set_default_timeout(PAGE_TIMEOUT * 1000)
@@ -610,6 +624,7 @@ async def _run_scrape_job(job_id: str):
                             print(f"[Agent] ⚠️  Gagal inject cookie: {_ce}")
             else:
                 context, page = await create_context(browser, proxy=await proxy_mgr.get_valid_proxy())
+                job["_browser"] = browser
 
             context_ref   = [context]
             product_count = 0
@@ -618,6 +633,24 @@ async def _run_scrape_job(job_id: str):
             keyword = job["keyword"]
             platform = job.get("platform", "tokopedia")
             print(f"\n{'═'*60}\n🔍 Keyword: '{keyword}' ({platform.upper()})\n{'═'*60}")
+            
+            skipped_urls = set()
+            if job.get("backend_url") and job.get("token"):
+                try:
+                    job["message"] = "Memeriksa riwayat produk di database..."
+                    import requests
+                    res = requests.get(
+                        f"{job['backend_url'].rstrip('/')}/api/scraped-urls",
+                        headers={"Authorization": f"Bearer {job['token']}"},
+                        timeout=15
+                    )
+                    if res.status_code == 200:
+                        urls = res.json().get("urls", [])
+                        skipped_urls = set(urls)
+                        print(f"[Agent] Ditemukan {len(skipped_urls)} produk di riwayat untuk di-skip.")
+                except Exception as e:
+                    print(f"[Agent] Gagal fetch scraped-urls: {e}")
+
             job["message"] = f"Membuka {platform.capitalize()} untuk '{keyword}'..."
 
             if platform == "shopee":
@@ -628,6 +661,7 @@ async def _run_scrape_job(job_id: str):
                     is_cdp=is_cdp,
                     target_product_count=job["target_product_count"],
                     harga_threshold=job.get("harga_threshold", 0),
+                    skipped_urls=skipped_urls,
                 )
             else:
                 scrape_products, context, page = await scrape_all_pages(
@@ -637,6 +671,7 @@ async def _run_scrape_job(job_id: str):
                     is_cdp=is_cdp,
                     target_product_count=job["target_product_count"],
                     harga_threshold=job.get("harga_threshold", 0),
+                    skipped_urls=skipped_urls,
                 )
 
             if not scrape_products:
@@ -814,7 +849,8 @@ async def _run_scrape_job(job_id: str):
             job["message"] = f"Mengirim {len(mapped)} produk ke server..."
             upload_status = _upload_results(
                 job["backend_url"], mapped, keyword, session_id,
-                job["username"], job["harga_threshold"], job.get("platform", "tokopedia")
+                job["username"], job["harga_threshold"], job.get("platform", "tokopedia"),
+                token=job.get("token", "")
             )
         elif not mapped:
             upload_status = "skip_empty"
@@ -832,11 +868,15 @@ async def _run_scrape_job(job_id: str):
         job["finished_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     except Exception as e:
-        job["status"]      = "error"
-        job["message"]     = f"Error: {str(e)}"
+        if job.get("status") == "cancelled" or "closed" in str(e).lower() or "cancel" in str(e).lower():
+            job["status"]      = "cancelled"
+            job["message"]     = "Pemantauan dihentikan paksa oleh user."
+        else:
+            job["status"]      = "error"
+            job["message"]     = f"Error: {str(e)}"
+            print(f"[Agent Error] {e}")
+            import traceback; traceback.print_exc()
         job["finished_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        print(f"[Agent Error] {e}")
-        import traceback; traceback.print_exc()
 
 
 def _create_excel(results: list, keyword: str, session_id: str, harga_threshold: int = 350000) -> str:
@@ -909,12 +949,13 @@ def _create_excel(results: list, keyword: str, session_id: str, harga_threshold:
         return ""
 
 
-def _upload_results(backend_url: str, results: list, keyword: str, session_id: str, username: str, harga_threshold: int = 350000, platform: str = "tokopedia") -> str:
+def _upload_results(backend_url: str, results: list, keyword: str, session_id: str, username: str, harga_threshold: int = 350000, platform: str = "tokopedia", token: str = "") -> str:
     """Upload hasil scraping ke backend SiPantau. Return 'ok' | 'error'."""
     MAX_RETRY = 3
     for attempt in range(1, MAX_RETRY + 1):
         try:
             url = backend_url.rstrip("/") + "/api/scrape/results"
+            headers = {"Authorization": f"Bearer {token}"} if token else {}
             payload = {
                 "session_id":     session_id,
                 "keyword":        keyword,
@@ -923,7 +964,7 @@ def _upload_results(backend_url: str, results: list, keyword: str, session_id: s
                 "results":        results,
                 "harga_threshold": harga_threshold,
             }
-            resp = requests.post(url, json=payload, timeout=30)
+            resp = requests.post(url, json=payload, headers=headers, timeout=30)
             if resp.status_code == 200:
                 print(f"[Agent] Hasil dikirim ke backend ({len(results)} produk)")
                 return "ok"

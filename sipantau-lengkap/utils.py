@@ -69,7 +69,7 @@ def validate_input(value: str, field_name: str, max_length: int = 100) -> str:
         raise HTTPException(status_code=400, detail=f"{field_name} terlalu panjang (maks {max_length} karakter)")
     return value.strip()
 
-def save_to_db(results, session_id, keyword, platforms, username="unknown"):
+def save_to_db(results, session_id, keyword, platforms, username="unknown", file_excel=""):
     with get_conn() as conn:
         cur = conn.cursor()
         from psycopg2.extras import execute_values
@@ -92,10 +92,10 @@ def save_to_db(results, session_id, keyword, platforms, username="unknown"):
             execute_values(cur, insert_query, data_to_insert)
 
         cur.execute(
-            """INSERT INTO riwayat_session (session_id,username,keyword,platforms,jumlah_data,status,waktu)
-               VALUES (%s,%s,%s,%s,%s,%s,%s)""",
+            """INSERT INTO riwayat_session (session_id,username,keyword,platforms,jumlah_data,status,waktu,file_excel)
+               VALUES (%s,%s,%s,%s,%s,%s,%s,%s)""",
             (session_id, username, keyword, ", ".join(platforms), len(results),
-             "Selesai", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+             "Selesai", datetime.now().strftime("%Y-%m-%d %H:%M:%S"), file_excel)
         )
         conn.commit()
         cur.close()
