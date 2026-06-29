@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
 from datetime import datetime
-import psycopg2.extras
 import logging
 
 from database import get_conn
@@ -17,7 +16,7 @@ def get_users(
     current_user: dict = Depends(require_admin)
 ):
     with get_conn() as conn:
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur = conn.cursor()
         where = "" if (include_deleted and current_user.get("level", 99) == 1) else "WHERE deleted_at IS NULL"
         cur.execute(
             f"SELECT id,username,nama,divisi,level,can_export,can_manage_users,created_at,updated_at,deleted_at FROM users {where} ORDER BY id"
@@ -43,13 +42,13 @@ def tambah_user(req: TambahUserRequest, current_user: dict = Depends(require_adm
     with get_conn() as conn:
         cur = conn.cursor()
         try:
-            cur.execute("SELECT id, deleted_at FROM users WHERE username = %s", (req.username,))
+            cur.execute("SELECT id, deleted_at FROM users WHERE username = ?", (req.username,))
             existing = cur.fetchone()
             if existing and existing[1] is not None:
                 cur.execute(
-                    """UPDATE users SET password=%s, nama=%s, divisi=%s, level=%s,
-                       can_export=%s, can_manage_users=%s, updated_at=%s, deleted_at=NULL
-                       WHERE username=%s""",
+                    """UPDATE users SET password=?, nama=?, divisi=?, level=?,
+                       can_export=?, can_manage_users=?, updated_at=?, deleted_at=NULL
+                       WHERE username=?""",
                     (hash_pw(req.password), req.nama, req.divisi, level, True, can_manage, now, req.username)
                 )
             elif existing:
@@ -57,14 +56,14 @@ def tambah_user(req: TambahUserRequest, current_user: dict = Depends(require_adm
             else:
                 cur.execute(
                     """INSERT INTO users (username,password,nama,divisi,level,can_export,can_manage_users,created_at)
-                       VALUES (%s,%s,%s,%s,%s,%s,%s,%s)""",
+                       VALUES (?,?,?,?,?,?,?,?)""",
                     (req.username, hash_pw(req.password), req.nama,
                      req.divisi, level, True, can_manage, now)
                 )
             conn.commit()
         except HTTPException:
             conn.rollback(); raise
-        except psycopg2.errors.UniqueViolation:
+        except __import__("sqlite3").IntegrityError:
             conn.rollback()
             raise HTTPException(status_code=400, detail="Username sudah digunakan")
         finally:
@@ -83,7 +82,7 @@ def hapus_user(username: str, current_user: dict = Depends(require_admin)):
     with get_conn() as conn:
         cur = conn.cursor()
         cur.execute(
-            "UPDATE users SET deleted_at=%s, updated_at=%s WHERE username=%s AND deleted_at IS NULL",
+            "UPDATE users SET deleted_at=?, updated_at=? WHERE username=? AND deleted_at IS NULL",
             (now, now, username)
         )
         if cur.rowcount == 0:
@@ -100,7 +99,7 @@ def restore_user(username: str, current_user: dict = Depends(require_superadmin)
     with get_conn() as conn:
         cur = conn.cursor()
         cur.execute(
-            "UPDATE users SET deleted_at=NULL, updated_at=%s WHERE username=%s AND deleted_at IS NOT NULL",
+            "UPDATE users SET deleted_at=NULL, updated_at=? WHERE username=? AND deleted_at IS NOT NULL",
             (now, username)
         )
         if cur.rowcount == 0:
@@ -119,12 +118,12 @@ def reset_password_user(req: ResetPasswordRequest, current_user: dict = Depends(
 
     with get_conn() as conn:
         cur = conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM users WHERE username=%s", (req.username,))
+        cur.execute("SELECT COUNT(*) FROM users WHERE username=?", (req.username,))
         if cur.fetchone()[0] == 0:
             cur.close()
             raise HTTPException(status_code=404, detail="User tidak ditemukan")
         cur.execute(
-            "UPDATE users SET password=%s WHERE username=%s",
+            "UPDATE users SET password=? WHERE username=?",
             (hash_pw(req.password_baru), req.username)
         )
         conn.commit()

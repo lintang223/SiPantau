@@ -468,14 +468,19 @@ export default function ScrapingPage() {
                         if (res.ok) {
                           setLoading(false);
                           setDone(true);
+                          setAgentJobId(null);
                         } else {
                           alert("Gagal membatalkan pemantauan.");
                         }
                       } catch (e) {
-                        alert("Gagal terhubung ke Agent.");
+                        if (window.confirm("Gagal terhubung ke Agent. Agent mungkin sudah tertutup atau mati.\n\nApakah Anda ingin membersihkan pemantauan yang macet (force clear)?")) {
+                           setLoading(false);
+                           setDone(true);
+                           setAgentJobId(null);
+                        }
                       }
                     }}
-                    style={{ padding: ".65rem 1.3rem", borderRadius: 6, background: "rgba(239, 68, 68, 0.15)", border: "1px solid #ef4444", color: "#fca5a5", cursor: "pointer", fontWeight: 700, fontSize: ".875rem", transition: "all 0.2s" }}
+                    style={{ padding: ".65rem 1.3rem", borderRadius: 6, background: "#fef2f2", border: "1px solid #ef4444", color: "#dc2626", cursor: "pointer", fontWeight: 700, fontSize: ".875rem", transition: "all 0.2s" }}
                   >
                     <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}><AlertTriangle size={16} /> Batalkan Pemantauan</span>
                   </button>
@@ -493,14 +498,14 @@ export default function ScrapingPage() {
                           alert("Gagal terhubung ke Agent.");
                         }
                       }}
-                      style={{ padding: ".55rem 1rem", border: "1px solid #4ade80", borderRadius: 6, background: "rgba(74,222,128,0.15)", cursor: "pointer", fontSize: ".85rem", color: "#86efac", fontWeight: 600 }}
+                      style={{ padding: ".55rem 1rem", border: "1px solid #22c55e", borderRadius: 6, background: "#f0fdf4", cursor: "pointer", fontSize: ".85rem", color: "#166534", fontWeight: 600 }}
                     >
                       <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}><FolderOpen size={16} /> Buka Folder Hasil (Screenshot)</span>
                     </button>
                     <button
                       type="button"
                       onClick={handleReset}
-                      style={{ padding: ".55rem 1rem", border: "1px solid rgba(255,255,255,0.4)", borderRadius: 6, background: "rgba(255,255,255,0.05)", cursor: "pointer", fontSize: ".85rem", color: "#fff", fontWeight: 600 }}
+                      style={{ padding: ".55rem 1rem", border: "1px solid #d1d5db", borderRadius: 6, background: "#f3f4f6", cursor: "pointer", fontSize: ".85rem", color: "#374151", fontWeight: 600 }}
                     >
                       <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}><Trash2 size={16} /> Bersihkan</span>
                     </button>

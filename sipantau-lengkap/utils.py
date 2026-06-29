@@ -11,7 +11,7 @@ def log_user_activity(conn, username: str, aktivitas: str, detail: str = "", ip_
     waktu = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     cur.execute(
         """INSERT INTO user_activity (username, aktivitas, detail, ip_address, waktu)
-           VALUES (%s, %s, %s, %s, %s)""",
+           VALUES (?, ?, ?, ?, ?)""",
         (username, aktivitas, detail, ip_address, waktu)
     )
     cur.close()
@@ -21,7 +21,7 @@ def log_login(conn, username: str, ip: str, user_agent: str, status: str, detail
     attempted_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     cur.execute(
         """INSERT INTO login_logs (username, ip_address, user_agent, status, detail, attempted_at)
-           VALUES (%s, %s, %s, %s, %s, %s)""",
+           VALUES (?, ?, ?, ?, ?, ?)""",
         (username, ip, user_agent[:500] if user_agent else "", status, detail, attempted_at)
     )
     cur.close()
@@ -31,7 +31,7 @@ def get_lockout_remaining(ip: str, max_attempts: int = 5, window: int = 300) -> 
     with get_conn() as conn:
         cur = conn.cursor()
         cur.execute(
-            "SELECT attempted_at FROM login_logs WHERE ip_address = %s AND status = 'failed' AND attempted_at >= %s ORDER BY attempted_at DESC",
+            "SELECT attempted_at FROM login_logs WHERE ip_address = ? AND status = 'failed' AND attempted_at >= ? ORDER BY attempted_at DESC",
             (ip, cutoff)
         )
         rows = cur.fetchall()
@@ -58,9 +58,8 @@ def record_failed_attempt(ip: str):
 def clear_attempts(ip: str):
     with get_conn() as conn:
         cur = conn.cursor()
-        cur.execute("UPDATE login_logs SET status = 'failed_cleared' WHERE ip_address = %s AND status = 'failed'", (ip,))
+        cur.execute("UPDATE login_logs SET status = 'failed_cleared' WHERE ip_address = ? AND status = 'failed'", (ip,))
         conn.commit()
-        cur.close()
 
 def validate_input(value: str, field_name: str, max_length: int = 100) -> str:
     if not value or not value.strip():
@@ -72,12 +71,11 @@ def validate_input(value: str, field_name: str, max_length: int = 100) -> str:
 def save_to_db(results, session_id, keyword, platforms, username="unknown", file_excel=""):
     with get_conn() as conn:
         cur = conn.cursor()
-        from psycopg2.extras import execute_values
         
         insert_query = """
             INSERT INTO hasil_scraping
             (session_id,username,keyword,nama_produk,harga,platform,rating,terjual,url_produk,gambar_url,waktu_scrape)
-            VALUES %s
+            VALUES (?,?,?,?,?,?,?,?,?,?,?)
         """
         
         data_to_insert = [
@@ -89,11 +87,11 @@ def save_to_db(results, session_id, keyword, platforms, username="unknown", file
         ]
         
         if data_to_insert:
-            execute_values(cur, insert_query, data_to_insert)
+            cur.executemany(insert_query, data_to_insert)
 
         cur.execute(
             """INSERT INTO riwayat_session (session_id,username,keyword,platforms,jumlah_data,status,waktu,file_excel)
-               VALUES (%s,%s,%s,%s,%s,%s,%s,%s)""",
+               VALUES (?,?,?,?,?,?,?,?)""",
             (session_id, username, keyword, ", ".join(platforms), len(results),
              "Selesai", datetime.now().strftime("%Y-%m-%d %H:%M:%S"), file_excel)
         )

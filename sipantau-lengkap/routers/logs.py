@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends
-import psycopg2.extras
 
 from database import get_conn
 from security import require_admin, require_superadmin
@@ -9,7 +8,7 @@ router = APIRouter(prefix="/api", tags=["logs"])
 @router.get("/user-activity")
 def get_user_activity(current_user: dict = Depends(require_admin)):
     with get_conn() as conn:
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur = conn.cursor()
         cur.execute("SELECT * FROM user_activity ORDER BY id DESC LIMIT 500")
         rows = cur.fetchall()
         cur.close()
@@ -23,18 +22,18 @@ def get_login_logs(
     current_user: dict = Depends(require_superadmin)
 ):
     with get_conn() as conn:
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur = conn.cursor()
         conditions = []
         params     = []
         if status:
-            conditions.append("status = %s")
+            conditions.append("status = ?")
             params.append(status)
         if username:
-            conditions.append("username ILIKE %s")
+            conditions.append("username ILIKE ?")
             params.append(f"%{username}%")
         where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
         params.append(min(limit, 1000))
-        cur.execute(f"SELECT * FROM login_logs {where} ORDER BY id DESC LIMIT %s", params)
+        cur.execute(f"SELECT * FROM login_logs {where} ORDER BY id DESC LIMIT ?", params)
         rows = cur.fetchall()
         cur.close()
     return {"logs": [dict(r) for r in rows]}
