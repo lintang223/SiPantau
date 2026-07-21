@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { Settings, Activity, ClipboardList, AlertTriangle, CheckCircle, Search, FolderOpen, Trash2, Download } from "lucide-react";
-import { API_URL, AGENT_URL } from "@/lib/api";
+import { API_URL, AGENT_URL, apiFetch } from "@/lib/api";
 
 type Produk = {
   nama: string;
@@ -468,7 +468,7 @@ export default function ScrapingPage() {
                         if (res.ok) {
                           setLoading(false);
                           setDone(true);
-                          setAgentJobId(null);
+                          setAgentJobId("");
                         } else {
                           alert("Gagal membatalkan pemantauan.");
                         }
@@ -476,7 +476,7 @@ export default function ScrapingPage() {
                         if (window.confirm("Gagal terhubung ke Agent. Agent mungkin sudah tertutup atau mati.\n\nApakah Anda ingin membersihkan pemantauan yang macet (force clear)?")) {
                            setLoading(false);
                            setDone(true);
-                           setAgentJobId(null);
+                           setAgentJobId("");
                         }
                       }
                     }}
@@ -563,9 +563,20 @@ export default function ScrapingPage() {
                   <button
                     onClick={async () => {
                       try {
-                        const res = await fetch(`${API_URL}/api/export/download/${fileExcel}`);
-                        if (!res.ok) throw new Error("Gagal mengunduh");
-                        const blob = await res.blob();
+                        let res = await apiFetch(`/api/export/download/${fileExcel}`);
+                        let blob: Blob;
+                        if (!res.ok) {
+                          // Jika gagal dari backend (misal nama file beda karena versi Agent lama), coba dari Agent
+                          if (agentJobId) {
+                            const agentRes = await fetch(`${AGENT_URL}/download/${agentJobId}`);
+                            if (!agentRes.ok) throw new Error("Gagal mengunduh dari server & agent");
+                            blob = await agentRes.blob();
+                          } else {
+                            throw new Error("Gagal mengunduh");
+                          }
+                        } else {
+                          blob = await res.blob();
+                        }
                         const url = window.URL.createObjectURL(blob);
                         const a = document.createElement("a");
                         a.href = url;

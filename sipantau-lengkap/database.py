@@ -1,30 +1,67 @@
 import os
 import logging
-import sqlite3
 from contextlib import contextmanager
+from typing import Optional
+import psycopg2
+from psycopg2 import pool as pg_pool
+from psycopg2.extras import RealDictCursor
 from datetime import datetime
 
 logger = logging.getLogger("sipantau")
 
-DB_PATH = "sipantau.db"
+DB_CONFIG = {
+    "host":   os.getenv("DB_HOST", "localhost"),
+    "port":   int(os.getenv("DB_PORT", "5432")),
+    "dbname": os.getenv("DB_NAME", "sipantau"),
+    "user":   os.getenv("DB_USER", "postgres"),
+    "password": os.getenv("DB_PASSWORD", ""),
+}
 
-def dict_factory(cursor, row):
-    """Buat semua fetchone/fetchall mengembalikan dict biasa (kompatibel dengan .get())"""
-    return {col[0]: row[idx] for idx, col in enumerate(cursor.description)}
+sslmode = os.getenv("DB_SSLMODE")
+if sslmode:
+    DB_CONFIG["sslmode"] = sslmode
+
+_pool: Optional[pg_pool.ThreadedConnectionPool] = None
+
+def get_pool() -> pg_pool.ThreadedConnectionPool:
+    global _pool
+    if _pool is None or _pool.closed:
+        _pool = pg_pool.ThreadedConnectionPool(2, 10, **DB_CONFIG)
+        logger.info("Connection pool PostgreSQL dibuat.")
+    return _pool
+
+class DictConnectionWrapper:
+    def __init__(self, conn):
+        self._conn = conn
+
+    def cursor(self, *args, **kwargs):
+        if 'cursor_factory' not in kwargs:
+            kwargs['cursor_factory'] = RealDictCursor
+        return self._conn.cursor(*args, **kwargs)
+
+    def commit(self):
+        return self._conn.commit()
+
+    def rollback(self):
+        return self._conn.rollback()
+
+    def close(self):
+        return self._conn.close()
+
+    def __getattr__(self, name):
+        return getattr(self._conn, name)
 
 @contextmanager
 def get_conn():
-    conn = sqlite3.connect(DB_PATH, timeout=10.0)
-    conn.row_factory = dict_factory          # ← semua row jadi dict
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA synchronous=NORMAL")
+    conn = get_pool().getconn()
+    wrapped_conn = DictConnectionWrapper(conn)
     try:
-        yield conn
+        yield wrapped_conn
     except Exception:
         conn.rollback()
         raise
     finally:
-        conn.close()
+        get_pool().putconn(conn)
 
 def init_db():
     from security import hash_pw, DIVISI_LEVEL
@@ -39,33 +76,33 @@ def init_db():
         cur = conn.cursor()
 
         cur.execute("""CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL,
+            id SERIAL PRIMARY KEY, username TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL, nama TEXT,
             created_at TEXT
         )""")
         cur.execute("""CREATE TABLE IF NOT EXISTS hasil_scraping (
-            id INTEGER PRIMARY KEY AUTOINCREMENT, session_id TEXT, username TEXT, keyword TEXT,
-            nama_produk TEXT, harga INTEGER, platform TEXT, rating REAL,
+            id SERIAL PRIMARY KEY, session_id TEXT, username TEXT, keyword TEXT,
+            nama_produk TEXT, harga BIGINT, platform TEXT, rating REAL,
             terjual TEXT, url_produk TEXT, gambar_url TEXT, waktu_scrape TEXT
         )""")
         cur.execute("""CREATE TABLE IF NOT EXISTS riwayat_session (
-            id INTEGER PRIMARY KEY AUTOINCREMENT, session_id TEXT, username TEXT, keyword TEXT,
+            id SERIAL PRIMARY KEY, session_id TEXT, username TEXT, keyword TEXT,
             platforms TEXT, jumlah_data INTEGER, status TEXT, file_excel TEXT, waktu TEXT
         )""")
         cur.execute("""CREATE TABLE IF NOT EXISTS divisi_access (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             divisi_asal   TEXT NOT NULL,
             divisi_target TEXT NOT NULL,
-            can_view      BOOLEAN DEFAULT 1,
+            can_view      BOOLEAN DEFAULT true,
             UNIQUE(divisi_asal, divisi_target)
         )""")
         cur.execute("""CREATE TABLE IF NOT EXISTS user_activity (
-            id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL,
+            id SERIAL PRIMARY KEY, username TEXT NOT NULL,
             aktivitas TEXT NOT NULL, detail TEXT,
             ip_address TEXT, waktu TEXT NOT NULL
         )""")
         cur.execute("""CREATE TABLE IF NOT EXISTS login_logs (
-            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            id           SERIAL PRIMARY KEY,
             username     TEXT,
             ip_address   TEXT,
             user_agent   TEXT,
@@ -74,7 +111,8 @@ def init_db():
             attempted_at TEXT NOT NULL
         )""")
         cur.execute(
-            "SELECT count(*) AS c FROM sqlite_master WHERE type='index' AND name='idx_login_logs_attempted_at'"
+            "SELECT COUNT(*) AS c FROM pg_indexes "
+            "WHERE tablename='login_logs' AND indexname='idx_login_logs_attempted_at'"
         )
         if cur.fetchone()["c"] == 0:
             cur.execute("CREATE INDEX idx_login_logs_attempted_at ON login_logs(attempted_at)")
@@ -83,8 +121,8 @@ def init_db():
         migrations = [
             ("users",           "divisi",           "TEXT DEFAULT 'balai_gakkum'"),
             ("users",           "level",            "INTEGER DEFAULT 3"),
-            ("users",           "can_export",       "BOOLEAN DEFAULT 1"),
-            ("users",           "can_manage_users", "BOOLEAN DEFAULT 0"),
+            ("users",           "can_export",       "BOOLEAN DEFAULT true"),
+            ("users",           "can_manage_users", "BOOLEAN DEFAULT false"),
             ("users",           "foto_profil",      "TEXT"),
             ("users",           "updated_at",       "TEXT"),
             ("users",           "deleted_at",       "TEXT"),
@@ -93,20 +131,29 @@ def init_db():
             ("riwayat_session", "divisi",           "TEXT DEFAULT 'balai_gakkum'"),
         ]
         for table, col, col_type in migrations:
-            try:
-                # Coba tambah kolom, kalau gagal berarti sudah ada
+            cur.execute(
+                "SELECT COUNT(*) AS c FROM information_schema.columns WHERE table_name=%s AND column_name=%s",
+                (table, col)
+            )
+            if cur.fetchone()["c"] == 0:
                 cur.execute(f"ALTER TABLE {table} ADD COLUMN {col} {col_type}")
-            except sqlite3.OperationalError:
-                pass
+
+        # Hapus kolom password_plain jika masih ada (cleanup legacy)
+        cur.execute(
+            "SELECT COUNT(*) AS c FROM information_schema.columns WHERE table_name='users' AND column_name='password_plain'"
+        )
+        if cur.fetchone()["c"] > 0:
+            cur.execute("ALTER TABLE users DROP COLUMN password_plain")
+            logger.info("Kolom password_plain dihapus dari tabel users.")
 
         # Seed access rules
         for asal, target in DEFAULT_ACCESS:
             cur.execute(
-                "INSERT OR IGNORE INTO divisi_access (divisi_asal, divisi_target) VALUES (?,?)",
+                "INSERT INTO divisi_access (divisi_asal, divisi_target) VALUES (%s,%s) ON CONFLICT DO NOTHING",
                 (asal, target)
             )
 
-        # Default admin
+        # Default admin — password dari env var
         cur.execute("SELECT COUNT(*) AS c FROM users WHERE username='admin'")
         if cur.fetchone()["c"] == 0:
             import secrets, string
@@ -122,26 +169,18 @@ def init_db():
                 logger.warning("="*60)
             cur.execute(
                 """INSERT INTO users (username,password,nama,divisi,level,can_export,can_manage_users,created_at)
-                   VALUES (?,?,?,?,?,?,?,?)""",
+                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s)""",
                 ("admin", hash_pw(_admin_pw), "Administrator",
-                 "sekditjen", 1, 1, 1, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                 "sekditjen", 1, True, True, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
             )
 
         # Sync level
         cur.execute("SELECT username, divisi FROM users WHERE level IS NULL OR level = 0")
-        for uname, divisi in cur.fetchall():
+        for r in cur.fetchall():
+            uname, divisi = r["username"], r["divisi"]
             lvl = DIVISI_LEVEL.get(divisi or "balai_gakkum", 3)
-            # Update perlu menggunakan execute lain atau commit terpisah.
-            # Namun karena kita di dalam transaksi, aman menggunakan cursor terpisah
-        cur.execute("UPDATE users SET level=3 WHERE level IS NULL OR level=0") # Simplifikasi
+            cur.execute("UPDATE users SET level=%s WHERE username=%s", (lvl, uname))
 
         conn.commit()
-    print("Database SQLite siap!")
-
-def get_pool():
-    # Helper kosong agar main.py tidak error saat shutdown (pool.closeall())
-    class DummyPool:
-        @property
-        def closed(self): return True
-        def closeall(self): pass
-    return DummyPool()
+        cur.close()
+    print("Database PostgreSQL siap!")

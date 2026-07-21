@@ -1,5 +1,5 @@
 "use client";
-import { LayoutDashboard, Search, FolderClock, Settings, Menu, X, LogOut, ChevronDown, Lock, Users } from "lucide-react";
+import { LayoutDashboard, Search, FolderClock, Settings, Menu, X, LogOut, ChevronDown, Lock, Users, Terminal } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -143,9 +143,14 @@ export default function Navbar() {
                       <FolderClock size={15} /> Riwayat Aktivitas User
                     </Link>
                     {user?.divisi === "sekditjen" && (
-                      <Link href="/riwayat-login" style={{ display: "flex", alignItems: "center", gap: ".5rem", padding: ".65rem 1rem", fontSize: ".82rem", color: "var(--ink2)" }} onClick={() => setShowMenu(false)}>
-                        <Search size={15} /> Log Login
-                      </Link>
+                      <>
+                        <Link href="/riwayat-login" style={{ display: "flex", alignItems: "center", gap: ".5rem", padding: ".65rem 1rem", fontSize: ".82rem", color: "var(--ink2)" }} onClick={() => setShowMenu(false)}>
+                          <Search size={15} /> Log Login
+                        </Link>
+                        <Link href="/riwayat-system" style={{ display: "flex", alignItems: "center", gap: ".5rem", padding: ".65rem 1rem", fontSize: ".82rem", color: "var(--ink2)" }} onClick={() => setShowMenu(false)}>
+                          <Terminal size={15} /> Log Sistem
+                        </Link>
+                      </>
                     )}
                   </>
                 )}
@@ -189,7 +194,10 @@ export default function Navbar() {
                   <div className="ditem" onClick={() => { router.push("/kelola-user"); setOpen(false); }} style={{ display: "flex", alignItems: "center", gap: ".5rem" }}><Users size={16} /> Kelola User</div>
                   <div className="ditem" onClick={() => { router.push("/riwayat-aktivitas"); setOpen(false); }} style={{ display: "flex", alignItems: "center", gap: ".5rem" }}><FolderClock size={16} /> Riwayat Aktivitas</div>
                   {user?.divisi === "sekditjen" && (
-                    <div className="ditem" onClick={() => { router.push("/riwayat-login"); setOpen(false); }} style={{ display: "flex", alignItems: "center", gap: ".5rem" }}><Search size={16} /> Log Login</div>
+                    <>
+                      <div className="ditem" onClick={() => { router.push("/riwayat-login"); setOpen(false); }} style={{ display: "flex", alignItems: "center", gap: ".5rem" }}><Search size={16} /> Log Login</div>
+                      <div className="ditem" onClick={() => { router.push("/riwayat-system"); setOpen(false); }} style={{ display: "flex", alignItems: "center", gap: ".5rem" }}><Terminal size={16} /> Log Sistem</div>
+                    </>
                   )}
                 </>
               )}

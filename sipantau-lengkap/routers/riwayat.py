@@ -23,12 +23,12 @@ def get_riwayat(
             accessible = get_accessible_divisi(conn, user_divisi)
             if divisi not in accessible:
                 raise HTTPException(status_code=403, detail="Akses ditolak")
-            cur.execute("SELECT username FROM users WHERE divisi=?", (divisi,))
+            cur.execute("SELECT username FROM users WHERE divisi=%s", (divisi,))
             unames = [r["username"] for r in cur.fetchall()]
             if not unames:
                 cur.close()
                 return {"riwayat": []}
-            ph = ",".join(["?"] * len(unames))
+            ph = ",".join(["%s"] * len(unames))
             cur.execute(
                 f"SELECT rs.*, u.divisi as user_divisi FROM riwayat_session rs LEFT JOIN users u ON rs.username=u.username WHERE rs.username IN ({ph}) ORDER BY rs.id DESC LIMIT 100",
                 unames
@@ -37,12 +37,12 @@ def get_riwayat(
             if current_user.get("level", 99) > 2 and username != current_user["sub"]:
                 raise HTTPException(status_code=403, detail="Akses ditolak")
             cur.execute(
-                "SELECT rs.*, u.divisi as user_divisi FROM riwayat_session rs LEFT JOIN users u ON rs.username=u.username WHERE rs.username=? ORDER BY rs.id DESC LIMIT 50", (username,)
+                "SELECT rs.*, u.divisi as user_divisi FROM riwayat_session rs LEFT JOIN users u ON rs.username=u.username WHERE rs.username=%s ORDER BY rs.id DESC LIMIT 50", (username,)
             )
         else:
             if current_user.get("level", 99) > 2:
                 cur.execute(
-                    "SELECT rs.*, u.divisi as user_divisi FROM riwayat_session rs LEFT JOIN users u ON rs.username=u.username WHERE rs.username=? ORDER BY rs.id DESC LIMIT 50",
+                    "SELECT rs.*, u.divisi as user_divisi FROM riwayat_session rs LEFT JOIN users u ON rs.username=u.username WHERE rs.username=%s ORDER BY rs.id DESC LIMIT 50",
                     (current_user["sub"],)
                 )
             else:

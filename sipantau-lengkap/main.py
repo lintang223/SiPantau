@@ -19,7 +19,15 @@ from routers import auth, users, logs, riwayat, stats, scraping
 
 ALLOWED_ORIGINS = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")]
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+os.makedirs("logs", exist_ok=True)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler("logs/backend.log", encoding="utf-8")
+    ]
+)
 logger = logging.getLogger("sipantau")
 
 app = FastAPI(title="SiPantau API", version="2.0.0")

@@ -42,13 +42,13 @@ def tambah_user(req: TambahUserRequest, current_user: dict = Depends(require_adm
     with get_conn() as conn:
         cur = conn.cursor()
         try:
-            cur.execute("SELECT id, deleted_at FROM users WHERE username = ?", (req.username,))
+            cur.execute("SELECT id, deleted_at FROM users WHERE username = %s", (req.username,))
             existing = cur.fetchone()
             if existing and existing[1] is not None:
                 cur.execute(
-                    """UPDATE users SET password=?, nama=?, divisi=?, level=?,
-                       can_export=?, can_manage_users=?, updated_at=?, deleted_at=NULL
-                       WHERE username=?""",
+                    """UPDATE users SET password=%s, nama=%s, divisi=%s, level=%s,
+                       can_export=%s, can_manage_users=%s, updated_at=%s, deleted_at=NULL
+                       WHERE username=%s""",
                     (hash_pw(req.password), req.nama, req.divisi, level, True, can_manage, now, req.username)
                 )
             elif existing:
@@ -56,7 +56,7 @@ def tambah_user(req: TambahUserRequest, current_user: dict = Depends(require_adm
             else:
                 cur.execute(
                     """INSERT INTO users (username,password,nama,divisi,level,can_export,can_manage_users,created_at)
-                       VALUES (?,?,?,?,?,?,?,?)""",
+                       VALUES (%s,%s,%s,%s,%s,%s,%s,%s)""",
                     (req.username, hash_pw(req.password), req.nama,
                      req.divisi, level, True, can_manage, now)
                 )
@@ -82,7 +82,7 @@ def hapus_user(username: str, current_user: dict = Depends(require_admin)):
     with get_conn() as conn:
         cur = conn.cursor()
         cur.execute(
-            "UPDATE users SET deleted_at=?, updated_at=? WHERE username=? AND deleted_at IS NULL",
+            "UPDATE users SET deleted_at=%s, updated_at=%s WHERE username=%s AND deleted_at IS NULL",
             (now, now, username)
         )
         if cur.rowcount == 0:
@@ -99,7 +99,7 @@ def restore_user(username: str, current_user: dict = Depends(require_superadmin)
     with get_conn() as conn:
         cur = conn.cursor()
         cur.execute(
-            "UPDATE users SET deleted_at=NULL, updated_at=? WHERE username=? AND deleted_at IS NOT NULL",
+            "UPDATE users SET deleted_at=NULL, updated_at=%s WHERE username=%s AND deleted_at IS NOT NULL",
             (now, username)
         )
         if cur.rowcount == 0:
@@ -118,12 +118,12 @@ def reset_password_user(req: ResetPasswordRequest, current_user: dict = Depends(
 
     with get_conn() as conn:
         cur = conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM users WHERE username=?", (req.username,))
-        if cur.fetchone()[0] == 0:
+        cur.execute("SELECT COUNT(*) FROM users WHERE username=%s", (req.username,))
+        if list(cur.fetchone().values())[0] == 0:
             cur.close()
             raise HTTPException(status_code=404, detail="User tidak ditemukan")
         cur.execute(
-            "UPDATE users SET password=? WHERE username=?",
+            "UPDATE users SET password=%s WHERE username=%s",
             (hash_pw(req.password_baru), req.username)
         )
         conn.commit()

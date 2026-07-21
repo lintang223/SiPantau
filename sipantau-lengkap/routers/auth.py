@@ -36,7 +36,7 @@ def login(req: LoginRequest, request: Request, response: Response):
 
     with get_conn() as conn:
         cur = conn.cursor()
-        cur.execute("SELECT * FROM users WHERE username = ? AND deleted_at IS NULL", (username_clean,))
+        cur.execute("SELECT * FROM users WHERE username = %s AND deleted_at IS NULL", (username_clean,))
         user = cur.fetchone()
         cur.close()
 
@@ -98,7 +98,7 @@ def get_me(current_user: dict = Depends(get_current_user)):
     username = current_user["sub"]
     with get_conn() as conn:
         cur = conn.cursor()
-        cur.execute("SELECT * FROM users WHERE username = ?", (username,))
+        cur.execute("SELECT * FROM users WHERE username = %s", (username,))
         user = cur.fetchone()
         if not user:
             cur.close()
@@ -133,13 +133,13 @@ def ganti_password(req: ChangePasswordRequest, request: Request, current_user: d
 
     with get_conn() as conn:
         cur = conn.cursor()
-        cur.execute("SELECT * FROM users WHERE username = ?", (req.username,))
+        cur.execute("SELECT * FROM users WHERE username = %s", (req.username,))
         user = cur.fetchone()
         if not user or not verify_pw(req.password_lama, user["password"]):
             cur.close()
             raise HTTPException(status_code=401, detail="Password lama salah")
         cur.execute(
-            "UPDATE users SET password=? WHERE username=?",
+            "UPDATE users SET password=%s WHERE username=%s",
             (hash_pw(req.password_baru), req.username)
         )
         log_user_activity(conn, req.username, "Ganti Password", "User mengubah password miliknya", ip)
@@ -159,11 +159,11 @@ def update_profil(req: UpdateProfilRequest, request: Request, current_user: dict
 
     with get_conn() as conn:
         cur = conn.cursor()
-        cur.execute("UPDATE users SET nama=? WHERE username=?", (nama_bersih, username))
+        cur.execute("UPDATE users SET nama=%s WHERE username=%s", (nama_bersih, username))
         if cur.rowcount == 0:
             cur.close()
             raise HTTPException(status_code=404, detail="User tidak ditemukan")
-        cur.execute("SELECT * FROM users WHERE username=?", (username,))
+        cur.execute("SELECT * FROM users WHERE username=%s", (username,))
         user = cur.fetchone()
         divisi = user.get("divisi") or "balai_gakkum"
         level  = user.get("level") or DIVISI_LEVEL.get(divisi, 3)
@@ -195,12 +195,12 @@ def update_foto(req: UpdateFotoRequest, request: Request, current_user: dict = D
 
     with get_conn() as conn:
         cur = conn.cursor()
-        cur.execute("UPDATE users SET foto_profil=? WHERE username=?", (req.foto, username))
+        cur.execute("UPDATE users SET foto_profil=%s WHERE username=%s", (req.foto, username))
         if cur.rowcount == 0:
             cur.close()
             raise HTTPException(status_code=404, detail="User tidak ditemukan")
         
-        cur.execute("SELECT * FROM users WHERE username=?", (username,))
+        cur.execute("SELECT * FROM users WHERE username=%s", (username,))
         user = cur.fetchone()
         divisi = user.get("divisi") or "balai_gakkum"
         level  = user.get("level") or DIVISI_LEVEL.get(divisi, 3)

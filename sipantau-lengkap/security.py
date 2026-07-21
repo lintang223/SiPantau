@@ -92,10 +92,10 @@ def get_accessible_divisi(conn, user_divisi: str) -> List[str]:
         return list(DIVISI_LEVEL.keys())
     cur = conn.cursor()
     cur.execute(
-        "SELECT divisi_target FROM divisi_access WHERE divisi_asal = ? AND can_view = 1",
+        "SELECT divisi_target FROM divisi_access WHERE divisi_asal = %s AND can_view = 1",
         (user_divisi,)
     )
-    result = [r[0] for r in cur.fetchall()]
+    result = [r["divisi_target"] for r in cur.fetchall()]
     cur.close()
     if lvl <= 2 and user_divisi not in result and user_divisi in DIVISI_LEVEL:
         result.insert(0, user_divisi)

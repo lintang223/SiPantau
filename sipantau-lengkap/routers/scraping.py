@@ -35,7 +35,7 @@ def get_scraped_urls():
             cur = conn.cursor()
             # Ambil semua URL produk yang ada di database
             cur.execute("SELECT url_produk FROM hasil_scraping")
-            urls = [row[0] for row in cur.fetchall()]
+            urls = [row["url_produk"] for row in cur.fetchall()]
             cur.close()
             return {"urls": urls}
     except Exception as e:
@@ -45,7 +45,7 @@ def get_scraped_urls():
 @router.post("/export")
 def export_excel(req: ExportRequest, current_user: dict = Depends(get_current_user)):
     with get_conn() as conn:
-        df = pd.read_sql("SELECT * FROM hasil_scraping WHERE session_id = ?", conn, params=(req.session_id,))
+        df = pd.read_sql("SELECT * FROM hasil_scraping WHERE session_id = %s", conn, params=(req.session_id,))
     if df.empty:
         raise HTTPException(status_code=404, detail="Data tidak ditemukan")
     filename = export_to_excel_file(df.to_dict("records"), req.keyword, req.session_id)

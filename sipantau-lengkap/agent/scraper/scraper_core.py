@@ -131,9 +131,9 @@ async def scroll_and_extract(page, keyword: str, seen_links: set) -> list[dict]:
             let results = new Map();
             let lastHeight = document.body.scrollHeight;
             let noChangeCount = 0;
-            // 50 tick × 80ms = 4000ms menunggu sebelum menyerah
-            // Ini penting agar Tokopedia punya waktu memuat produk baru setelah klik
-            const MAX_NO_CHANGE = 50;
+            // 35 tick × 60ms = 2100ms menunggu sebelum menyerah
+            // Lebih cepat dari sebelumnya (50×80ms=4000ms) tapi tetap reliable
+            const MAX_NO_CHANGE = 35;
             
             function isLoading() {
                 // Deteksi apakah Tokopedia sedang memuat konten baru
@@ -216,7 +216,7 @@ async def scroll_and_extract(page, keyword: str, seen_links: set) -> list[dict]:
                 } else {
                     noChangeCount = 0;
                 }
-            }, 80); // 80ms interval (lebih stabil dari 60ms)
+            }, 60); // 60ms interval (cukup responsif)
         });
     }
     """
@@ -251,7 +251,7 @@ async def scroll_and_extract(page, keyword: str, seen_links: set) -> list[dict]:
 async def click_load_more(page) -> bool:
     # Scroll ke paling bawah dulu agar tombol muncul di viewport
     await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-    await asyncio.sleep(random.uniform(1.2, 1.8))
+    await asyncio.sleep(random.uniform(0.7, 1.2))
 
     try:
         btn_locator = page.locator("button", has_text="Muat Lebih Banyak").first
@@ -272,7 +272,7 @@ async def click_load_more(page) -> bool:
 
     try:
         await btn_locator.scroll_into_view_if_needed()
-        await asyncio.sleep(random.uniform(0.8, 1.3))
+        await asyncio.sleep(random.uniform(0.5, 0.9))
 
         box = await btn_locator.bounding_box()
         if box is None: 
@@ -363,7 +363,7 @@ async def scrape_all_pages(
                 await route.continue_()
         await page.route("**/*", _block_search_res)
 
-    await asyncio.sleep(2)
+    await asyncio.sleep(1.5)
     for sel in [
         "button[aria-label='close']",
         "button[class*='CloseButton']",
@@ -379,7 +379,7 @@ async def scrape_all_pages(
             pass
 
     await page.evaluate("window.scrollTo(0, 0)")
-    await asyncio.sleep(1.0)
+    await asyncio.sleep(0.6)
 
     while True:
         if target_product_count and len(all_products) >= target_product_count:
@@ -441,10 +441,10 @@ async def scrape_all_pages(
                     break
 
             print(f"      ⏳ Menunggu produk baru ter-load...")
-            await asyncio.sleep(random.uniform(2.5, 4.0))
+            await asyncio.sleep(random.uniform(1.8, 3.0))
 
             print(f"      ⬇️  Melanjutkan scroll ke bawah...")
-            await asyncio.sleep(1.5)
+            await asyncio.sleep(0.8)
 
             if new_this == 0:
                 throttle_count += 1
@@ -1057,7 +1057,7 @@ async def scrape_product_detail(page, product: dict, harga_threshold: int = 0) -
 
         print(f"      ⏳ Tunggu elemen produk ({WAIT_DATA_TIMEOUT}s maks)...")
         await page.evaluate("window.scrollTo(0, 400)")
-        await asyncio.sleep(random.uniform(1.0, 1.8))
+        await asyncio.sleep(random.uniform(0.5, 1.0))
         await wait_for_product_data(page, timeout=WAIT_DATA_TIMEOUT)
 
         if "shopee.co.id" in product["link"]:

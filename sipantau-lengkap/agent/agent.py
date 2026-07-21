@@ -722,7 +722,7 @@ async def _run_scrape_job(job_id: str):
                             await detail_page.close()
                         except Exception:
                             pass
-                await human_delay(1.0, 2.0)
+                await human_delay(0.3, 0.8)
                 return detailed
 
             for i in range(0, total, MAX_CONCURRENT_TABS):
@@ -777,8 +777,9 @@ async def _run_scrape_job(job_id: str):
 
                 tasks = []
                 for j, prod in enumerate(batch):
-                    await rate_rl.wait()
-                    await asyncio.sleep(random.uniform(0.3, 1.5))
+                    # Stagger kecil antar task agar tidak semua buka tab bersamaan
+                    # (rate_rl.wait() sudah ada di dalam worker)
+                    await asyncio.sleep(random.uniform(0.1, 0.4) * j)
                     tasks.append(worker(prod, i + j + 1))
 
                 batch_results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -847,11 +848,15 @@ async def _run_scrape_job(job_id: str):
         upload_status = ""
         if job["backend_url"] and mapped:
             job["message"] = f"Mengirim {len(mapped)} produk ke server..."
-            upload_status = _upload_results(
+            upload_res = _upload_results(
                 job["backend_url"], mapped, keyword, session_id,
                 job["username"], job["harga_threshold"], job.get("platform", "tokopedia"),
                 token=job.get("token", "")
             )
+            upload_status = upload_res["status"]
+            if upload_status == "ok" and upload_res["file_excel"]:
+                # Override agent's local filename with backend's filename so frontend can download from backend
+                job["file_excel"] = upload_res["file_excel"]
         elif not mapped:
             upload_status = "skip_empty"
         else:
@@ -949,8 +954,8 @@ def _create_excel(results: list, keyword: str, session_id: str, harga_threshold:
         return ""
 
 
-def _upload_results(backend_url: str, results: list, keyword: str, session_id: str, username: str, harga_threshold: int = 350000, platform: str = "tokopedia", token: str = "") -> str:
-    """Upload hasil scraping ke backend SiPantau. Return 'ok' | 'error'."""
+def _upload_results(backend_url: str, results: list, keyword: str, session_id: str, username: str, harga_threshold: int = 350000, platform: str = "tokopedia", token: str = "") -> dict:
+    """Upload hasil scraping ke backend SiPantau. Return dict dengan status dan file_excel backend."""
     MAX_RETRY = 3
     for attempt in range(1, MAX_RETRY + 1):
         try:
@@ -966,15 +971,16 @@ def _upload_results(backend_url: str, results: list, keyword: str, session_id: s
             }
             resp = requests.post(url, json=payload, headers=headers, timeout=30)
             if resp.status_code == 200:
+                data = resp.json()
                 print(f"[Agent] Hasil dikirim ke backend ({len(results)} produk)")
-                return "ok"
+                return {"status": "ok", "file_excel": data.get("file_excel", "")}
             else:
                 print(f"[Agent] Backend error (attempt {attempt}): {resp.status_code} — {resp.text[:200]}")
         except Exception as e:
             print(f"[Agent] Gagal kirim ke backend (attempt {attempt}): {e}")
         if attempt < MAX_RETRY:
             time.sleep(3)
-    return "error"
+    return {"status": "error", "file_excel": ""}
 
 
 # ══════════════════════════════════════════
