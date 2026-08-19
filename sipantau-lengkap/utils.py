@@ -52,8 +52,6 @@ def check_rate_limit(ip: str, max_attempts: int = 5, window: int = 300):
             detail=f"Terlalu banyak percobaan login. Coba lagi dalam {remaining} detik."
         )
 
-def record_failed_attempt(ip: str):
-    pass
 
 def clear_attempts(ip: str):
     with get_conn() as conn:

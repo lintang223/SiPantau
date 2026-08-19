@@ -14,23 +14,7 @@ export const AGENT_URL = isServer
   ? (process.env.NEXT_PUBLIC_AGENT_URL || "http://127.0.0.1:7777").replace("localhost", "127.0.0.1")
   : (process.env.NEXT_PUBLIC_AGENT_URL || "http://localhost:7777").replace("127.0.0.1", "localhost");
 
-/**
- * @deprecated Token sekarang dikelola murni via HttpOnly Cookie dari backend.
- * Fungsi ini dipertahankan hanya untuk kompatibilitas, tapi tidak digunakan untuk auth.
- */
-export function getToken(): string {
-  if (typeof window === "undefined") return "";
-  return localStorage.getItem("sipantau_token") || "";
-}
 
-/**
- * @deprecated Tidak perlu menyimpan token di localStorage lagi.
- * Auth dikelola murni via HttpOnly Cookie.
- */
-export function saveToken(token: string) {
-  // No-op: token tidak lagi disimpan di localStorage (risiko XSS)
-  void token;
-}
 
 /** Hapus semua auth data dan redirect ke login */
 export function logout() {
