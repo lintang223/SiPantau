@@ -10,6 +10,8 @@ const PROTECTED_PATHS = [
   '/pengaturan',
   '/kelola-user',
   '/riwayat-aktivitas',
+  '/riwayat-login',
+  '/riwayat-system',
   '/hasil',
   '/akses-ditolak',
 ]
@@ -43,6 +45,8 @@ export const config = {
     '/pengaturan/:path*',
     '/kelola-user/:path*',
     '/riwayat-aktivitas/:path*',
+    '/riwayat-login/:path*',
+    '/riwayat-system/:path*',
     '/hasil/:path*',
   ],
 }

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Request, Response, Depends, HTTPException
 import logging
+import os
 
 from database import get_conn
 from security import get_current_user, create_token, verify_pw, hash_pw, DIVISI_LEVEL, DIVISI_COLOR, JWT_EXPIRE_HRS, get_accessible_divisi, validate_password_complexity
@@ -65,13 +66,14 @@ def login(req: LoginRequest, request: Request, response: Response):
 
     logger.info(f"Login berhasil: {username_clean} dari IP {ip}")
     
+    is_secure = os.getenv("COOKIE_SECURE", "false").lower() == "true"
     response.set_cookie(
         key="sipantau_token",
         value=token,
         httponly=True,
         max_age=JWT_EXPIRE_HRS * 3600,
         samesite="lax",
-        secure=False,
+        secure=is_secure,
     )
 
     return {
@@ -192,6 +194,14 @@ def update_profil(req: UpdateProfilRequest, request: Request, current_user: dict
 def update_foto(req: UpdateFotoRequest, request: Request, current_user: dict = Depends(get_current_user)):
     username = current_user["sub"]
     ip = request.client.host if request.client else "unknown"
+
+    # Validasi ukuran foto (maksimal ~200KB setelah Base64 encoding)
+    MAX_FOTO_LEN = 270_000  # ~200KB dalam karakter Base64
+    if not req.foto or len(req.foto) > MAX_FOTO_LEN:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Ukuran foto terlalu besar (maks ~200KB). Kompres gambar terlebih dahulu."
+        )
 
     with get_conn() as conn:
         cur = conn.cursor()

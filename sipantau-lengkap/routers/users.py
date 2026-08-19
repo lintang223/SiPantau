@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from datetime import datetime
 import logging
+import psycopg2.errors
 
 from database import get_conn
 from security import require_admin, require_superadmin, hash_pw, DIVISI_LEVEL, validate_password_complexity
@@ -44,7 +45,7 @@ def tambah_user(req: TambahUserRequest, current_user: dict = Depends(require_adm
         try:
             cur.execute("SELECT id, deleted_at FROM users WHERE username = %s", (req.username,))
             existing = cur.fetchone()
-            if existing and existing[1] is not None:
+            if existing and existing["deleted_at"] is not None:
                 cur.execute(
                     """UPDATE users SET password=%s, nama=%s, divisi=%s, level=%s,
                        can_export=%s, can_manage_users=%s, updated_at=%s, deleted_at=NULL
@@ -63,7 +64,7 @@ def tambah_user(req: TambahUserRequest, current_user: dict = Depends(require_adm
             conn.commit()
         except HTTPException:
             conn.rollback(); raise
-        except __import__("sqlite3").IntegrityError:
+        except psycopg2.errors.UniqueViolation:
             conn.rollback()
             raise HTTPException(status_code=400, detail="Username sudah digunakan")
         finally:

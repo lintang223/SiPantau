@@ -2,6 +2,7 @@ import os
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse
 import pandas as pd
+from psycopg2.extras import RealDictCursor
 
 from database import get_conn
 from security import get_current_user
@@ -44,8 +45,17 @@ def get_scraped_urls():
 
 @router.post("/export")
 def export_excel(req: ExportRequest, current_user: dict = Depends(get_current_user)):
-    with get_conn() as conn:
-        df = pd.read_sql("SELECT * FROM hasil_scraping WHERE session_id = %s", conn, params=(req.session_id,))
+    from database import get_pool
+    # Gunakan koneksi psycopg2 asli (bukan DictConnectionWrapper) agar kompatibel dengan pd.read_sql
+    conn_raw = get_pool().getconn()
+    try:
+        df = pd.read_sql(
+            "SELECT * FROM hasil_scraping WHERE session_id = %s",
+            conn_raw,
+            params=(req.session_id,)
+        )
+    finally:
+        get_pool().putconn(conn_raw)
     if df.empty:
         raise HTTPException(status_code=404, detail="Data tidak ditemukan")
     filename = export_to_excel_file(df.to_dict("records"), req.keyword, req.session_id)

@@ -19,13 +19,15 @@ from routers import auth, users, logs, riwayat, stats, scraping
 
 ALLOWED_ORIGINS = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")]
 
+from logging.handlers import RotatingFileHandler
+
 os.makedirs("logs", exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler("logs/backend.log", encoding="utf-8")
+        RotatingFileHandler("logs/backend.log", maxBytes=5*1024*1024, backupCount=3, encoding="utf-8")
     ]
 )
 logger = logging.getLogger("sipantau")

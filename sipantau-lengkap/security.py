@@ -92,7 +92,7 @@ def get_accessible_divisi(conn, user_divisi: str) -> List[str]:
         return list(DIVISI_LEVEL.keys())
     cur = conn.cursor()
     cur.execute(
-        "SELECT divisi_target FROM divisi_access WHERE divisi_asal = %s AND can_view = 1",
+        "SELECT divisi_target FROM divisi_access WHERE divisi_asal = %s AND can_view = TRUE",
         (user_divisi,)
     )
     result = [r["divisi_target"] for r in cur.fetchall()]
