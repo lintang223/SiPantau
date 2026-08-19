@@ -16,11 +16,21 @@ security = HTTPBearer(auto_error=False)
 DIVISI_LEVEL = {
     "sekditjen": 1,
     "dit_ppsa":  2,
+    "gakkum_sumatra": 3,
+    "gakkum_jabalnusra": 3,
+    "gakkum_kalimantan": 3,
+    "gakkum_sulawesi": 3,
+    "gakkum_malupapua": 3,
     "balai_gakkum": 3,
 }
 DIVISI_COLOR = {
     "sekditjen": "#7c3aed",
     "dit_ppsa":  "#0d9488",
+    "gakkum_sumatra": "#2563eb",
+    "gakkum_jabalnusra": "#0284c7",
+    "gakkum_kalimantan": "#10b981",
+    "gakkum_sulawesi": "#d97706",
+    "gakkum_malupapua": "#6366f1",
     "balai_gakkum": "#2563eb",
 }
 

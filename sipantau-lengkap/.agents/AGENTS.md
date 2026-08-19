@@ -69,8 +69,13 @@ ALLOWED_ORIGINS=http://localhost:3000
 | Divisi | Level | Hak Akses |
 |--------|-------|-----------|
 | `sekditjen` | 1 | Full access — bisa lihat semua divisi, kelola user, lihat system logs |
-| `dit_ppsa` | 2 | Bisa lihat data balai_gakkum |
-| `balai_gakkum` | 3 | Hanya bisa lihat data milik sendiri |
+| `dit_ppsa` | 2 | Bisa lihat data Balai Gakkum (Sumatra, Jabalnusra, Kalimantan, Sulawesi, Maluku Papua) |
+| `gakkum_sumatra` | 3 | Hanya bisa lihat data milik Balai Gakkum Sumatra |
+| `gakkum_jabalnusra` | 3 | Hanya bisa lihat data milik Balai Gakkum Jabalnusra |
+| `gakkum_kalimantan` | 3 | Hanya bisa lihat data milik Balai Gakkum Kalimantan |
+| `gakkum_sulawesi` | 3 | Hanya bisa lihat data milik Balai Gakkum Sulawesi |
+| `gakkum_malupapua` | 3 | Hanya bisa lihat data milik Balai Gakkum Maluku Papua |
+| `balai_gakkum` | 3 | Legacy/Fallback general Balai Gakkum |
 
 ## Cara Menjalankan
 

@@ -70,6 +70,16 @@ def init_db():
         ("sekditjen", "dit_ppsa"),
         ("sekditjen", "balai_gakkum"),
         ("dit_ppsa",  "balai_gakkum"),
+        ("sekditjen", "gakkum_sumatra"),
+        ("sekditjen", "gakkum_jabalnusra"),
+        ("sekditjen", "gakkum_kalimantan"),
+        ("sekditjen", "gakkum_sulawesi"),
+        ("sekditjen", "gakkum_malupapua"),
+        ("dit_ppsa",  "gakkum_sumatra"),
+        ("dit_ppsa",  "gakkum_jabalnusra"),
+        ("dit_ppsa",  "gakkum_kalimantan"),
+        ("dit_ppsa",  "gakkum_sulawesi"),
+        ("dit_ppsa",  "gakkum_malupapua"),
     ]
 
     with get_conn() as conn:
