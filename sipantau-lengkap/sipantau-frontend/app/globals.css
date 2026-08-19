@@ -82,11 +82,13 @@ img { max-width: 100%; }
 
 .t-logo { display: flex; align-items: center; gap: .65rem; flex-shrink: 0; }
 .t-logo img {
-  width: 36px; height: 36px;
+  height: 34px;
+  width: auto;
+  max-width: 120px;
   object-fit: contain;
-  border-radius: 8px;
-  background: rgba(255,255,255,0.12);
-  padding: 4px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.1);
+  padding: 3px;
 }
 .t-logo-text { line-height: 1.25; }
 .t-logo-text span  { color: #fff; font-size: .95rem; font-weight: 800; display: block; }

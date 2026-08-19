@@ -69,10 +69,10 @@ export default function Navbar() {
     <>
       <div className="topbar">
         <Link href="/dashboard" className="t-logo">
-          <Image src="/logo.png" alt="SiPantau" width={34} height={34} />
+          <Image src="/logo.png" alt="SiPantau" width={92} height={34} style={{ width: 'auto', height: '34px' }} priority />
           <div className="t-logo-text">
             <span>SiPantau</span>
-            <small>Kementrian Kehutanan RI</small>
+            <small>Kementerian Kehutanan RI</small>
           </div>
         </Link>
 
@@ -173,10 +173,10 @@ export default function Navbar() {
           <div className="drawer">
             <div className="dhead">
               <div style={{ display: "flex", alignItems: "center", gap: ".6rem" }}>
-                <Image src="/logo.png" alt="SiPantau" width={28} height={28} style={{ borderRadius: 7, background: "rgba(255,255,255,0.12)", padding: 3 }} />
+                <Image src="/logo.png" alt="SiPantau" width={76} height={28} style={{ width: 'auto', height: '28px', borderRadius: 5, background: "rgba(255,255,255,0.12)", padding: 2 }} />
                 <div style={{ lineHeight: 1.2 }}>
                   <div style={{ color: "#fff", fontSize: ".88rem", fontWeight: 800 }}>SiPantau</div>
-                  <div style={{ color: "rgba(255,255,255,.5)", fontSize: ".6rem" }}>Kementrian Kehutanan RI</div>
+                  <div style={{ color: "rgba(255,255,255,.5)", fontSize: ".6rem" }}>Kementerian Kehutanan RI</div>
                 </div>
               </div>
               <button className="dclose" onClick={() => setOpen(false)}><X size={18} /></button>

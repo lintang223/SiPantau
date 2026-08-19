@@ -209,13 +209,11 @@ export default function LoginPage() {
       <div className="login-root">
         <div className="overlay" />
         <div className="login-card">
-          <div className="logo-row">
-            <div className="logo-circle">
-              <img src="/logo.png" alt="Logo" style={{ width:26, height:26, objectFit:'contain' }} />
-            </div>
+          <div className="logo-row" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '8px', marginBottom: '24px' }}>
+            <img src="/logo.png" alt="Logo" style={{ height: 44, objectFit: 'contain' }} />
             <div>
-              <div className="logo-name">SiPantau</div>
-              <div className="logo-sub">Kementerian Lingkungan Hidup & Kehutanan</div>
+              <div className="logo-name" style={{ fontSize: '18px', fontWeight: 800 }}>SiPantau</div>
+              <div className="logo-sub" style={{ fontSize: '10.5px' }}>Kementerian Kehutanan Republik Indonesia</div>
             </div>
           </div>
 
