@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "SiPantau — Kementerian Kehutanan RI",
-  description: "Sistem Pantau Informasi Market KLHK RI",
+  description: "Sistem Pantau Informasi Market Kemenhut RI",
 };
 
 export default function RootLayout({

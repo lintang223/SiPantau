@@ -1,7 +1,7 @@
 """
 SiPantau — Sistem Riset Informasi Market
 Backend FastAPI + Auth PostgreSQL + Hierarchical RBAC + JWT
-Kementerian Lingkungan Hidup dan Kehutanan RI
+Kementerian Kehutanan RI
 """
 
 import os

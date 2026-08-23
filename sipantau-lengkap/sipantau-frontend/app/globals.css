@@ -82,13 +82,10 @@ img { max-width: 100%; }
 
 .t-logo { display: flex; align-items: center; gap: .65rem; flex-shrink: 0; }
 .t-logo img {
-  height: 34px;
+  height: 44px;
   width: auto;
-  max-width: 120px;
+  max-width: 220px;
   object-fit: contain;
-  border-radius: 6px;
-  background: rgba(255,255,255,0.1);
-  padding: 3px;
 }
 .t-logo-text { line-height: 1.25; }
 .t-logo-text span  { color: #fff; font-size: .95rem; font-weight: 800; display: block; }
@@ -226,7 +223,7 @@ img { max-width: 100%; }
 .bt { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
 .bs { background: #fff3eb; color: #c05800; border: 1px solid #fed7aa; }
 .bl { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
-.bk { background: var(--green-light); color: var(--green); border: 1px solid #6ee7b7; }
+.bk { background: var(--green-light); color: #fff; border: 1px solid #6ee7b7; }
 
 /* ── FORM ─────────────────────────────────── */
 .frow { display: flex; gap: .85rem; flex-wrap: wrap; margin-bottom: .85rem; }

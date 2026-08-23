@@ -105,7 +105,7 @@ def export_to_excel_file(results, keyword, session_id, harga_threshold=350000):
     ws.title = "Data Scraping"
 
     ws.merge_cells("A1:I1")
-    ws["A1"] = "KEMENTERIAN LINGKUNGAN HIDUP DAN KEHUTANAN REPUBLIK INDONESIA"
+    ws["A1"] = "KEMENTERIAN KEHUTANAN REPUBLIK INDONESIA"
     ws["A1"].font      = Font(bold=True, size=13, color="FFFFFF")
     ws["A1"].fill      = PatternFill("solid", fgColor="1B4332")
     ws["A1"].alignment = Alignment(horizontal="center", vertical="center")

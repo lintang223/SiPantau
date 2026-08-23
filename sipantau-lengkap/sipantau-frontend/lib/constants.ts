@@ -4,7 +4,7 @@
  */
 
 export const DIVISI_LABEL: Record<string, string> = {
-  sekditjen: 'Sekretaris Direktorat Jenderal Penegakan Hukum',
+  sekditjen: 'Setditjen',
   dit_ppsa:  'Direktorat Pengaduan, Pengawasan dan Sanksi Administrasi',
   gakkum_sumatra: 'Balai Gakkum Sumatra',
   gakkum_jabalnusra: 'Balai Gakkum Jabalnusra (Jawa, Bali, Nusa Tenggara)',
@@ -15,7 +15,7 @@ export const DIVISI_LABEL: Record<string, string> = {
 }
 
 export const DIVISI_LABEL_SHORT: Record<string, string> = {
-  sekditjen: 'Sekditjen',
+  sekditjen: 'Setditjen',
   dit_ppsa:  'Dit. PPSA',
   gakkum_sumatra: 'Gakkum Sumatra',
   gakkum_jabalnusra: 'Gakkum Jabalnusra',
@@ -37,7 +37,7 @@ export const DIVISI_COLOR: Record<string, string> = {
 }
 
 export const DIVISI_OPTIONS = [
-  { value: 'sekditjen', label: 'Sekditjen' },
+  { value: 'sekditjen', label: 'Setditjen' },
   { value: 'dit_ppsa',  label: 'Dit. PPSA' },
   { value: 'gakkum_sumatra', label: 'Gakkum Sumatra' },
   { value: 'gakkum_jabalnusra', label: 'Gakkum Jabalnusra' },

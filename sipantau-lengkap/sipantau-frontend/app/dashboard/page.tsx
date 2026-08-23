@@ -145,14 +145,7 @@ export default function DashboardPage() {
             <h1 style={{ fontSize: "2.2rem", letterSpacing: "-1px", marginTop: ".2rem" }}>Dashboard Pemantauan</h1>
             <p style={{ color: "rgba(255,255,255,0.7)", fontSize: ".95rem", marginTop: ".4rem" }}>Ringkasan pemantauan otomatis marketplace</p>
           </div>
-          <div className="backend-pill" style={{
-            background: backendOk === true ? "rgba(20, 83, 45, 0.6)" : backendOk === false ? "rgba(127, 29, 29, 0.6)" : "rgba(255, 255, 255, 0.1)",
-            border: `1px solid ${backendOk === true ? "rgba(74, 222, 128, 0.4)" : backendOk === false ? "rgba(248, 113, 113, 0.4)" : "rgba(255, 255, 255, 0.2)"}`,
-            color:  backendOk === true ? "#4ade80" : backendOk === false ? "#fca5a5" : "#e5e7eb",
-          }}>
-            <span style={{ width: 8, height: 8, borderRadius: "50%", display: "inline-block", background: backendOk === true ? "#4ade80" : backendOk === false ? "#ef4444" : "#9ca3af", boxShadow: backendOk === true ? "0 0 10px #4ade80" : "none" }} />
-            {backendOk === null ? "Mengecek..." : backendOk ? "Backend Terhubung" : "Backend Offline"}
-          </div>
+
         </div>
 
         {backendOk === false && (

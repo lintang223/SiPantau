@@ -1,5 +1,5 @@
 # SiPantau — Frontend Next.js
-### Kementerian Lingkungan Hidup dan Kehutanan RI
+### Kementerian Kehutanan RI
 
 ---
 
@@ -16,7 +16,7 @@ sipantau-frontend/     ← Folder ini (Next.js)
 ├── components/
 │   └── Navbar.tsx         → Navigasi atas
 └── public/
-    └── logo.png           → Logo KLHK
+    └── logo.png           → Logo Kemenhut
 
 main.py                ← Backend Python (jalankan terpisah)
 ```
@@ -45,4 +45,4 @@ npm run dev
 
 ---
 
-*SiPantau v1.0 — © 2025 KLHK RI*
+*SiPantau v1.0 — © 2026 Kemenhut RI*

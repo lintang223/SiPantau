@@ -559,50 +559,27 @@ export default function ScrapingPage() {
                 <span style={{ fontSize: ".72rem", fontWeight: 700, padding: ".2rem .65rem", borderRadius: 99, background: "rgba(74,222,128,0.15)", color: "#86efac", border: "1px solid #4ade80" }}>
                   {results.length} listing
                 </span>
-                {fileExcel && (
+                {fileExcel && done && (
                   <button
                     onClick={async () => {
                       try {
-                        let res = await apiFetch(`/api/export/download/${fileExcel}`);
-                        let blob: Blob;
-                        if (!res.ok) {
-                          // Jika gagal dari backend (misal nama file beda karena versi Agent lama), coba dari Agent
-                          if (agentJobId) {
-                            const agentRes = await fetch(`${AGENT_URL}/download/${agentJobId}`);
-                            if (!agentRes.ok) throw new Error("Gagal mengunduh dari server & agent");
-                            blob = await agentRes.blob();
-                          } else {
-                            throw new Error("Gagal mengunduh");
-                          }
-                        } else {
-                          blob = await res.blob();
-                        }
-                        const url = window.URL.createObjectURL(blob);
+                        const res = await apiFetch(`/api/export/download/${fileExcel}`);
+                        const blob = await res.blob();
+                        const url = URL.createObjectURL(blob);
                         const a = document.createElement("a");
                         a.href = url;
                         a.download = fileExcel;
-                        document.body.appendChild(a);
                         a.click();
-                        window.URL.revokeObjectURL(url);
-                      } catch (e) {
-                        alert("Gagal mengunduh excel");
+                        URL.revokeObjectURL(url);
+                      } catch {
+                        alert("Gagal mengunduh file dari server.");
                       }
                     }}
                     className="btn-sm"
-                    style={{ display: "inline-flex", alignItems: "center", gap: ".3rem", border: "none", cursor: "pointer" }}
+                    style={{ display: "inline-flex", alignItems: "center", gap: ".3rem", border: "1px solid var(--green)", background: "var(--green)", color: "white", cursor: "pointer" }}
                   >
-                    <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}><Download size={14} /> Unduh Excel (Lokal)</span>
+                    <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}><Download size={14} /> Unduh Excel</span>
                   </button>
-                )}
-                {agentJobId && done && (
-                  <a
-                    href={`${AGENT_URL}/download/${agentJobId}`}
-                    className="btn-sm"
-                    style={{ display: "inline-flex", alignItems: "center", gap: ".3rem", textDecoration: "none", background: "var(--green)", color: "white", border: "1px solid var(--green)" }}
-                    target="_blank" rel="noopener noreferrer"
-                  >
-                    <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}><Download size={14} /> Unduh Excel (Lokal Agent)</span>
-                  </a>
                 )}
               </div>
             </div>

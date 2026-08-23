@@ -167,12 +167,7 @@ export default function LoginPage() {
           box-shadow: 0 24px 64px rgba(0,0,0,0.45); animation: card-in 0.5s cubic-bezier(0.22,1,0.36,1) both;
         }
         @keyframes card-in { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-        .login-card::before {
-          content:''; position:absolute; top:0; left:0; right:0; height:3px; border-radius:20px 20px 0 0;
-          background: linear-gradient(90deg,#1B4332,#4ade80,#2d8a3e,#1B4332); background-size:300%;
-          animation: shimmer 3s linear infinite;
-        }
-        @keyframes shimmer { 0%{background-position:200% center} 100%{background-position:-200% center} }
+
         .logo-row { display:flex; align-items:center; gap:12px; margin-bottom:28px; }
         .logo-circle {
           width:44px; height:44px; border-radius:12px; background:linear-gradient(135deg,#1B4332,#2d8a3e);
@@ -257,12 +252,9 @@ export default function LoginPage() {
                 : <><LogIn size={18} /> Masuk</>}
             </button>
 
-            <div style={{ marginTop: '1.25rem', textAlign: 'center' }}>
-              <a href="/lupa-password" style={{ fontSize: '13px', color: '#2d8a3e', textDecoration: 'none', fontWeight: 600 }}>Lupa Password?</a>
-            </div>
           </form>
 
-          <p className="footer">SiPantau v1.0 &nbsp;·&nbsp; © 2025 KLHK RI</p>
+          <p className="footer">SiPantau v1.0 &nbsp;·&nbsp; © 2026 Kemenhut RI</p>
         </div>
       </div>
     </>
