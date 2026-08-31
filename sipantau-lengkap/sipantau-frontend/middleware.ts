@@ -23,9 +23,9 @@ export function middleware(request: NextRequest) {
   const isProtected = PROTECTED_PATHS.some(p => pathname.startsWith(p))
   if (!isProtected) return NextResponse.next()
 
-  // Cek cookie HttpOnly sipantau_token yang di-set oleh backend
-  // Ini jauh lebih aman karena cookie HttpOnly tidak bisa dipalsukan via console JS
-  const tokenCookie = request.cookies.get('sipantau_token')
+  // Cek cookie dummy sipantau_auth yang di-set oleh frontend
+  // (Karena HttpOnly cookie dari Render tidak bisa dibaca oleh middleware Vercel)
+  const tokenCookie = request.cookies.get('sipantau_auth')
   if (!tokenCookie?.value) {
     const url = request.nextUrl.clone()
     url.pathname = '/'
