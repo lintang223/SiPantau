@@ -67,12 +67,13 @@ def login(req: LoginRequest, request: Request, response: Response):
     logger.info(f"Login berhasil: {username_clean} dari IP {ip}")
     
     is_secure = os.getenv("COOKIE_SECURE", "false").lower() == "true"
+    samesite_policy = "none" if is_secure else "lax"
     response.set_cookie(
         key="sipantau_token",
         value=token,
         httponly=True,
         max_age=JWT_EXPIRE_HRS * 3600,
-        samesite="lax",
+        samesite=samesite_policy,
         secure=is_secure,
     )
 
@@ -92,7 +93,9 @@ def login(req: LoginRequest, request: Request, response: Response):
 
 @router.post("/logout")
 def logout(response: Response):
-    response.delete_cookie(key="sipantau_token", path="/", samesite="lax")
+    is_secure = os.getenv("COOKIE_SECURE", "false").lower() == "true"
+    samesite_policy = "none" if is_secure else "lax"
+    response.delete_cookie(key="sipantau_token", path="/", samesite=samesite_policy, secure=is_secure)
     return {"success": True, "message": "Berhasil logout"}
 
 @router.get("/me")
