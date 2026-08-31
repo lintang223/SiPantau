@@ -274,26 +274,11 @@ async def click_load_more(page) -> bool:
         await btn_locator.scroll_into_view_if_needed()
         await asyncio.sleep(random.uniform(0.5, 0.9))
 
-        box = await btn_locator.bounding_box()
-        if box is None: 
-            return False
+        # Gunakan native click Playwright dengan delay agar lebih akurat
+        # Playwright otomatis menghitung posisi akurat meskipun resolusi layar berbeda
+        await btn_locator.click(delay=int(random.uniform(80, 200)))
 
-        tx = box["x"] + box["width"]  / 2 + random.uniform(-5, 5)
-        ty = box["y"] + box["height"] / 2 + random.uniform(-3, 3)
-
-        vp = page.viewport_size or {"width": 1280, "height": 800}
-        start_x = random.uniform(vp["width"] * 0.1, vp["width"] * 0.4)
-        start_y = random.uniform(vp["height"] * 0.3, vp["height"] * 0.6)
-        await page.mouse.move(start_x, start_y, steps=8)
-        await asyncio.sleep(random.uniform(0.1, 0.2))
-        await page.mouse.move(tx, ty, steps=15)
-        await asyncio.sleep(random.uniform(0.3, 0.6))
-
-        await page.mouse.down()
-        await asyncio.sleep(random.uniform(0.08, 0.18))
-        await page.mouse.up()
-
-        print(f"      Klik tombol 'Muat Lebih Banyak' di ({tx:.0f}, {ty:.0f})")
+        print(f"      Klik tombol 'Muat Lebih Banyak' (Otomatis)")
 
         await asyncio.sleep(random.uniform(1.5, 2.5))
         return True

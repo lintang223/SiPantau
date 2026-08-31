@@ -6,22 +6,22 @@ import os
 # ══════════════════════════════════════════
 OUTPUT_FOLDER       = "output"
 KEYWORDS_FILE       = "keywords.txt"
-PAGE_TIMEOUT        = 20
+PAGE_TIMEOUT        = 12
 # Restart sesi setiap N produk. Lebih besar = lebih sedikit jeda, lebih cepat,
 # tapi lebih berisiko diblok. Nilai 20 = balance kecepatan vs stealth.
-RESTART_EVERY       = 25
+RESTART_EVERY       = 50
 # Durasi cooldown (detik) saat restart sesi. Lebih lama = lebih aman.
 # Karena stealth kini aktif, kita bisa pakai nilai lebih moderat.
-COOLDOWN_ON_HANG    = 18
+COOLDOWN_ON_HANG    = 15
 
 # --- Diambil dari run.bat ---
 MAX_LOAD_MORE       = int(os.environ.get("SCRAPER_SCROLL", 5))
 HARGA_THRESHOLD     = int(os.environ.get("SCRAPER_THRESHOLD", 350000))
 SCRAPER_PLATFORM    = os.environ.get("SCRAPER_PLATFORM", "tokopedia").lower()
 
-# Kurangi tab paralel: 3 tab = lebih natural, lebih sedikit terdeteksi
-# dibanding 5 tab yang agresif. Trade-off: ~40% lebih lambat tapi ~3x lebih tahan.
-MAX_CONCURRENT_TABS = 3
+# Mode Cepat: Buka hingga 6 tab sekaligus untuk mempercepat proses.
+# Jika RAM tidak kuat, bisa diturunkan menjadi 4.
+MAX_CONCURRENT_TABS = 6
 
 # Validasi data sebelum screenshot
 WAIT_DATA_TIMEOUT   = 12        # detik — batas tunggu elemen produk muncul
