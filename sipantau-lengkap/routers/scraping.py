@@ -17,16 +17,33 @@ async def scrape(req: ScrapeRequest, current_user: dict = Depends(get_current_us
 
 @router.post("/scrape/results")
 def receive_scrape_results(req: ScrapeResultsRequest, request: Request):
-    # Agent lokal (localhost) tidak butuh token JWT
+    import os
+    from jose import jwt, JWTError
+    from security import JWT_SECRET, JWT_ALGORITHM
+
+    # Ambil token dari header Authorization
+    auth_header = request.headers.get("Authorization", "")
+    token = auth_header.replace("Bearer ", "").strip() if auth_header.startswith("Bearer ") else ""
+
+    # Cek apakah dari localhost (agen lokal)
     client_host = (request.client.host if request.client else "")
-    is_local    = client_host in ("127.0.0.1", "::1", "localhost")
+    is_local = client_host in ("127.0.0.1", "::1", "localhost")
+
     if not is_local:
-        # Jika dari luar, kita validasi token secara manual
-        get_current_user(request)
+        # Validasi token JWT jika dari luar (misalnya agen yang mengirim ke Render)
+        if not token:
+            raise HTTPException(status_code=401, detail="Token tidak ada")
+        try:
+            payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+            if not payload.get("sub"):
+                raise HTTPException(status_code=401, detail="Token tidak valid")
+        except JWTError:
+            raise HTTPException(status_code=401, detail="Token tidak valid atau kadaluarsa")
 
     filename = export_to_excel_file(req.results, req.keyword, req.session_id, req.harga_threshold)
     save_to_db(req.results, req.session_id, req.keyword, req.platforms, req.username, file_excel=filename)
     return {"success": True, "message": f"{len(req.results)} data disimpan", "file_excel": filename}
+
 
 @router.get("/scraped-urls")
 def get_scraped_urls():
