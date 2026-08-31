@@ -92,20 +92,8 @@ def ensure_browser_installed():
             print()
             print("═"*55)
             print("  ✅ Browser siap!")
-            print(f"  → Membuka halaman SiPantau...")
-            print("═"*55)
-
-            # Beri waktu server naik, lalu buka browser otomatis
-            import time as _time
-            _time.sleep(1.5)
-            try:
-                webbrowser.open(SIPANTAU_WEB_URL)
-                print(f"  ✓ Halaman SiPantau terbuka di browser.")
-                print(f"  Jika tidak terbuka otomatis, buka manual: {SIPANTAU_WEB_URL}")
-            except Exception:
-                print(f"  Buka manual di browser: {SIPANTAU_WEB_URL}")
-            print()
             print("  Agent aktif. JANGAN tutup jendela hitam ini.")
+            print(f"  Silakan buka web SiPantau di: {SIPANTAU_WEB_URL}")
             print("  Tekan Ctrl+C untuk menghentikan agent.")
             print("═"*55 + "\n")
         else:
