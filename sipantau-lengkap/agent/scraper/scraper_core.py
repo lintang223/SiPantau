@@ -131,9 +131,8 @@ async def scroll_and_extract(page, keyword: str, seen_links: set) -> list[dict]:
             let results = new Map();
             let lastHeight = document.body.scrollHeight;
             let noChangeCount = 0;
-            // 35 tick × 60ms = 2100ms menunggu sebelum menyerah
-            // Lebih cepat dari sebelumnya (50×80ms=4000ms) tapi tetap reliable
-            const MAX_NO_CHANGE = 35;
+            // 15 tick × 60ms = 900ms menunggu sebelum menyerah (Fast Mode)
+            const MAX_NO_CHANGE = 15;
             
             function isLoading() {
                 // Deteksi apakah Tokopedia sedang memuat konten baru
@@ -426,10 +425,10 @@ async def scrape_all_pages(
                     break
 
             print(f"      ⏳ Menunggu produk baru ter-load...")
-            await asyncio.sleep(random.uniform(1.8, 3.0))
+            await asyncio.sleep(random.uniform(0.8, 1.4))
 
             print(f"      ⬇️  Melanjutkan scroll ke bawah...")
-            await asyncio.sleep(0.8)
+            await asyncio.sleep(0.3)
 
             if new_this == 0:
                 throttle_count += 1
