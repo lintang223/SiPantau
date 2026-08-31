@@ -29,7 +29,7 @@ export default function ScrapingPage() {
 
   const [keyword, setKeyword]     = useState("");
   const [pages, setPages]         = useState("3");
-  const [targetCount, setTargetCount] = useState("50");
+  const [targetCount, setTargetCount] = useState("10");
   const [hargaThreshold, setHargaThreshold] = useState("350000");
   const [platforms] = useState({ tokopedia: true });
   const [loading, setLoading]     = useState(false);
@@ -408,22 +408,22 @@ export default function ScrapingPage() {
                     required autoFocus />
                 </div>
                 <div className="fgroup" style={{ display: "flex", flexDirection: "column" }}>
-                  <label>Load More (Tokopedia)</label>
+                  <label>Jumlah item yang di scrap</label>
                   <select className="finput" value={targetCount} onChange={e => setTargetCount(e.target.value)}>
-                    {[10, 20, 30, 50].map(n => <option key={n} value={n}>{n}x Klik</option>)}
+                    {[10, 20, 30, 50].map(n => <option key={n} value={n}>{n} item</option>)}
                   </select>
                   <small style={{ color: "var(--ink3)", fontSize: ".7rem", marginTop: ".3rem", lineHeight: 1.4 }}>
                     Sesi berikutnya lanjut dari produk yang belum pernah di-scrap.
                   </small>
                 </div>
                 <div className="fgroup" style={{ display: "flex", flexDirection: "column" }}>
-                  <label>Ambang Batas Harga (Threshold)</label>
+                  <label>Minimal Harga</label>
                   <div style={{ display: "flex", alignItems: "stretch" }}>
                     <span style={{ padding: "0 0.85rem", display: "flex", alignItems: "center", background: "var(--surface2)", border: "1.5px solid var(--border)", borderRight: "none", borderRadius: "6px 0 0 6px", fontSize: ".85rem", color: "var(--ink2)", fontWeight: 600 }}>Rp</span>
-                    <input type="number" className="finput" value={hargaThreshold}
-                      onChange={e => setHargaThreshold(e.target.value)}
-                      style={{ borderRadius: "0 6px 6px 0", flex: 1 }}
-                      min={0} step={50000} />
+                    <input type="text" className="finput" 
+                      value={hargaThreshold ? new Intl.NumberFormat('id-ID').format(Number(hargaThreshold)) : ''}
+                      onChange={e => setHargaThreshold(e.target.value.replace(/\D/g, ''))}
+                      style={{ borderRadius: "0 6px 6px 0", flex: 1 }} />
                   </div>
                   <small style={{ color: "var(--ink3)", fontSize: ".7rem", marginTop: ".3rem", lineHeight: 1.4 }}>
                     Produk di bawah harga ini akan di-skip. &ge; Rp1jt dilabeli <b>Mahal</b>.
