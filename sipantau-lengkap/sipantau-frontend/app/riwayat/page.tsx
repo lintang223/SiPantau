@@ -44,11 +44,15 @@ export default function RiwayatPage() {
 
   useEffect(() => { if (user) fetchData(filter); }, [user, filter]);
 
-  // Download Excel dengan token (fetch + blob)
-  const handleDownload = async (filename: string, keyword: string) => {
+  // Download Excel dengan token (fetch + blob) dan generate dari database
+  const handleDownload = async (session_id: string, filename: string, keyword: string) => {
     setDownloadingId(filename);
     try {
-      const res = await apiFetch(`/api/export/download/${filename}`);
+      const res = await apiFetch(`/api/export`, {
+        method: "POST",
+        body: JSON.stringify({ session_id, keyword })
+      });
+      if (!res.ok) throw new Error("Gagal mengunduh file");
       const blob = await res.blob();
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement("a");
@@ -166,7 +170,7 @@ export default function RiwayatPage() {
                               className="btn-sm"
                               style={{ display: "inline-flex", alignItems: "center", gap: ".3rem" }}
                               disabled={downloadingId === r.file_excel}
-                              onClick={() => handleDownload(r.file_excel, r.keyword)}
+                              onClick={() => handleDownload(r.session_id, r.file_excel, r.keyword)}
                             >
                               <Download size={14} />
                               {downloadingId === r.file_excel ? "..." : "Unduh"}
