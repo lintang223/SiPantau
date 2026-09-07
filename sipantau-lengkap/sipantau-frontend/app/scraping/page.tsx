@@ -334,6 +334,77 @@ export default function ScrapingPage() {
     }
   }
 
+  const handleDownloadExcel = async () => {
+    if (!results || results.length === 0) {
+      alert("Tidak ada data produk untuk diunduh.");
+      return;
+    }
+
+    // 1. Prioritas utama: Coba unduh file Excel yang dibuat oleh Agent di PC lokal
+    if (agentActive && sessionId) {
+      try {
+        const agentRes = await fetch(`${AGENT_URL}/download/${sessionId}`);
+        if (agentRes.ok) {
+          const blob = await agentRes.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = fileExcel || `sipantau_${keyword || "produk"}.xlsx`;
+          a.click();
+          URL.revokeObjectURL(url);
+          return;
+        }
+      } catch {
+        // Fallback ke generator lokal browser di bawah
+      }
+    }
+
+    // 2. Generate file Excel 100% lokal langsung di browser dari data results (tanpa perlu koneksi server)
+    try {
+      const XLSX = await import("xlsx");
+      const excelRows = results.map((r, i) => ({
+        "No": i + 1,
+        "Nama Produk": r.nama,
+        "Harga (Rp)": r.harga,
+        "Platform": r.platform,
+        "Rating": r.rating > 0 ? r.rating : "-",
+        "Terjual": r.terjual || "-",
+        "URL Produk": r.url,
+        "Waktu Scrape": r.waktu,
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(excelRows);
+      ws["!cols"] = [
+        { wch: 6 },
+        { wch: 45 },
+        { wch: 16 },
+        { wch: 14 },
+        { wch: 10 },
+        { wch: 12 },
+        { wch: 50 },
+        { wch: 22 },
+      ];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Hasil Scraping");
+
+      const tanggal = new Date().toISOString().split("T")[0];
+      const filename = `sipantau_${(keyword || "produk").replace(/\s+/g, "_")}_${tanggal}.xlsx`;
+      XLSX.writeFile(wb, filename);
+    } catch (e: any) {
+      alert(`Gagal membuat file Excel: ${e.message}`);
+    }
+  };
+
+  const handleOpenFolder = async () => {
+    try {
+      const res = await fetch(`${AGENT_URL}/open-output-folder`);
+      if (!res.ok) throw new Error("Gagal membuka folder");
+    } catch {
+      alert("Pastikan SiPantau_Agent.exe sedang berjalan di komputer Anda.");
+    }
+  };
+
   const selectedPlats = Object.entries(platforms).filter(([, v]) => v).map(([k]) => k);
   const badgeClass = () => "bt";
 
@@ -563,35 +634,31 @@ export default function ScrapingPage() {
                 <span style={{ fontSize: ".72rem", fontWeight: 700, padding: ".2rem .65rem", borderRadius: 99, background: "rgba(74,222,128,0.15)", color: "#86efac", border: "1px solid #4ade80" }}>
                   {results.length} listing
                 </span>
-                {fileExcel && done && (
-                  <button
-                    onClick={async () => {
-                      try {
-                        const res = await apiFetch(`/api/export`, {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ keyword, session_id: sessionId || undefined })
-                        });
-                        if (!res.ok) {
-                          const err = await res.json().catch(() => ({}));
-                          throw new Error(err.detail || "Gagal generate file");
-                        }
-                        const blob = await res.blob();
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement("a");
-                        a.href = url;
-                        a.download = `sipantau_${keyword}.xlsx`;
-                        a.click();
-                        URL.revokeObjectURL(url);
-                      } catch (e: any) {
-                        alert(`Gagal mengunduh file: ${e.message}`);
-                      }
-                    }}
-                    className="btn-sm"
-                    style={{ display: "inline-flex", alignItems: "center", gap: ".3rem", border: "1px solid var(--green)", background: "var(--green)", color: "white", cursor: "pointer" }}
-                  >
-                    <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}><Download size={14} /> Unduh Excel</span>
-                  </button>
+                {results.length > 0 && (
+                  <div style={{ display: "flex", alignItems: "center", gap: ".4rem" }}>
+                    <button
+                      onClick={handleDownloadExcel}
+                      className="btn-sm"
+                      style={{ display: "inline-flex", alignItems: "center", gap: ".3rem", border: "1px solid var(--green)", background: "var(--green)", color: "white", cursor: "pointer" }}
+                      title="Unduh file Excel langsung secara lokal"
+                    >
+                      <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}>
+                        <Download size={14} /> Unduh Excel
+                      </span>
+                    </button>
+                    {agentActive && (
+                      <button
+                        onClick={handleOpenFolder}
+                        className="btn-sm"
+                        style={{ display: "inline-flex", alignItems: "center", gap: ".3rem", border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.08)", color: "white", cursor: "pointer" }}
+                        title="Buka folder output (Excel & Screenshot) di File Explorer komputer lokal"
+                      >
+                        <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem" }}>
+                          <FolderOpen size={14} /> Buka Folder
+                        </span>
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
