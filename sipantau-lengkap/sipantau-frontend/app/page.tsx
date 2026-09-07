@@ -3,35 +3,46 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import {
+  Search,
+  AlertTriangle,
+  BarChart3,
+  Users,
+  History,
+  ShieldCheck,
+  LogIn,
+  ArrowRight,
+  CheckCircle2,
+} from 'lucide-react'
 
 const FEATURES = [
   {
-    icon: '🔍',
+    icon: <Search size={22} color="#4ade80" />,
     title: 'Pemantauan Otomatis',
     desc: 'Pantau ribuan listing produk di Tokopedia secara otomatis menggunakan teknologi web scraping cerdas.',
   },
   {
-    icon: '⚠️',
+    icon: <AlertTriangle size={22} color="#4ade80" />,
     title: 'Deteksi Perdagangan Ilegal',
     desc: 'Identifikasi produk mencurigakan seperti kayu, satwa, dan bahan ilegal lainnya yang diperdagangkan online.',
   },
   {
-    icon: '📊',
+    icon: <BarChart3 size={22} color="#4ade80" />,
     title: 'Laporan & Ekspor Data',
     desc: 'Unduh laporan lengkap dalam format Excel siap cetak untuk kebutuhan pelaporan dan tindak lanjut.',
   },
   {
-    icon: '👥',
+    icon: <Users size={22} color="#4ade80" />,
     title: 'Multi-Pengguna & Divisi',
     desc: 'Sistem manajemen pengguna berbasis divisi dengan kendali akses berlapis sesuai struktur organisasi.',
   },
   {
-    icon: '📜',
+    icon: <History size={22} color="#4ade80" />,
     title: 'Riwayat Lengkap',
     desc: 'Simpan semua sesi pemantauan dengan log aktivitas terperinci untuk audit dan dokumentasi.',
   },
   {
-    icon: '🛡️',
+    icon: <ShieldCheck size={22} color="#4ade80" />,
     title: 'Keamanan Berlapis',
     desc: 'Autentikasi aman dengan proteksi brute-force, session management, dan enkripsi password.',
   },
@@ -70,9 +81,9 @@ function StatCard({ label, val, suffix }: { label: string; val: number; suffix: 
     return () => obs.disconnect()
   }, [])
   return (
-    <div ref={ref} className="stat-card">
-      <div className="stat-val">{count}{suffix}</div>
-      <div className="stat-label">{label}</div>
+    <div ref={ref} className="lp-stat-card">
+      <div className="lp-stat-val">{count}{suffix}</div>
+      <div className="lp-stat-label">{label}</div>
     </div>
   )
 }
@@ -108,7 +119,7 @@ export default function LandingPage() {
           transition: background 0.3s, backdrop-filter 0.3s, box-shadow 0.3s;
         }
         .lp-nav.scrolled {
-          background: rgba(10,31,15,0.88); backdrop-filter: blur(18px);
+          background: rgba(10,31,15,0.92); backdrop-filter: blur(18px);
           box-shadow: 0 1px 0 rgba(255,255,255,0.06);
         }
         .lp-nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
@@ -119,12 +130,22 @@ export default function LandingPage() {
         .lp-nav-link { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.75); text-decoration: none; transition: color 0.2s; }
         .lp-nav-link:hover { color: #fff; }
         .lp-btn-masuk {
-          padding: 9px 22px; background: linear-gradient(135deg, #16a34a, #22c55e);
-          color: #fff; border-radius: 8px; font-weight: 700; font-size: 14px;
-          text-decoration: none; transition: transform 0.15s, box-shadow 0.2s;
-          box-shadow: 0 3px 12px rgba(74,222,128,0.3);
+          padding: 9px 20px;
+          background: #16a34a;
+          color: #fff;
+          border-radius: 8px;
+          font-weight: 700;
+          font-size: 14px;
+          text-decoration: none;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          transition: background 0.2s, transform 0.15s;
         }
-        .lp-btn-masuk:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(74,222,128,0.45); }
+        .lp-btn-masuk:hover {
+          background: #15803d;
+          transform: translateY(-1px);
+        }
 
         /* ── Hero ── */
         .lp-hero {
@@ -168,25 +189,41 @@ export default function LandingPage() {
         }
         .lp-hero-cta { display: flex; gap: 1rem; flex-wrap: wrap; }
         .lp-cta-primary {
-          padding: 14px 32px; background: linear-gradient(135deg, #15803d, #22c55e);
-          color: #fff; border-radius: 10px; font-weight: 800; font-size: 15px;
-          text-decoration: none; transition: all 0.2s; box-shadow: 0 6px 24px rgba(34,197,94,0.35);
-          display: flex; align-items: center; gap: 8px;
+          padding: 13px 28px;
+          background: #16a34a;
+          color: #fff;
+          border-radius: 10px;
+          font-weight: 700;
+          font-size: 15px;
+          text-decoration: none;
+          transition: background 0.2s, transform 0.15s;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
         }
-        .lp-cta-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(34,197,94,0.5); }
+        .lp-cta-primary:hover {
+          background: #15803d;
+          transform: translateY(-1px);
+        }
         .lp-cta-secondary {
-          padding: 14px 28px; background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,255,255,0.2);
-          color: #fff; border-radius: 10px; font-weight: 700; font-size: 15px;
-          text-decoration: none; transition: all 0.2s; backdrop-filter: blur(8px);
+          padding: 13px 26px;
+          background: rgba(255,255,255,0.06);
+          border: 1px solid rgba(255,255,255,0.2);
+          color: #fff;
+          border-radius: 10px;
+          font-weight: 600;
+          font-size: 15px;
+          text-decoration: none;
+          transition: all 0.2s;
+          backdrop-filter: blur(8px);
         }
-        .lp-cta-secondary:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4); }
+        .lp-cta-secondary:hover {
+          background: rgba(255,255,255,0.12);
+          border-color: rgba(255,255,255,0.35);
+        }
 
         /* ── Sections ── */
         .lp-section { padding: clamp(4rem, 8vw, 6rem) clamp(1.5rem, 5vw, 4rem); max-width: 1200px; margin: 0 auto; }
-        .lp-section-badge {
-          display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: 1.5px;
-          text-transform: uppercase; color: #4ade80; margin-bottom: 0.75rem;
-        }
         .lp-section-title {
           font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 900; letter-spacing: -1px;
           margin-bottom: 1rem; color: #fff;
@@ -195,31 +232,51 @@ export default function LandingPage() {
         .lp-divider { width: 100%; height: 1px; background: linear-gradient(90deg, transparent, rgba(74,222,128,0.2), transparent); margin: 0 auto; }
 
         /* ── Stats ── */
-        .lp-stats-wrap { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 20px; }
+        .lp-stats-wrap {
+          background: rgba(14, 46, 24, 0.55);
+          backdrop-filter: blur(16px);
+          border: 1px solid rgba(74, 222, 128, 0.15);
+          border-radius: 16px;
+          overflow: hidden;
+        }
         .lp-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0; }
-        .stat-card {
-          padding: 2.5rem 2rem; text-align: center; position: relative;
+        .lp-stat-card {
+          padding: 2.2rem 1.5rem;
+          text-align: center;
+          position: relative;
+          background: transparent !important;
           border-right: 1px solid rgba(255,255,255,0.07);
         }
-        .stat-card:last-child { border-right: none; }
-        .stat-val { font-size: 2.8rem; font-weight: 900; color: #4ade80; letter-spacing: -2px; line-height: 1; }
-        .stat-label { font-size: 12px; color: rgba(255,255,255,0.5); font-weight: 600; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .lp-stat-card:last-child { border-right: none; }
+        .lp-stat-val { font-size: 2.8rem; font-weight: 900; color: #4ade80; letter-spacing: -1.5px; line-height: 1; }
+        .lp-stat-label { font-size: 11px; color: rgba(255,255,255,0.65); font-weight: 700; margin-top: 8px; text-transform: uppercase; letter-spacing: 0.8px; }
 
         /* ── Features ── */
-        .lp-features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.25rem; margin-top: 3rem; }
+        .lp-features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.25rem; margin-top: 2.5rem; }
         .lp-feature-card {
-          background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 16px; padding: 1.75rem; transition: all 0.3s; cursor: default;
+          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 16px; padding: 1.75rem; transition: all 0.25s; cursor: default;
         }
-        .lp-feature-card:hover { background: rgba(74,222,128,0.06); border-color: rgba(74,222,128,0.25); transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.3); }
-        .lp-feature-icon { font-size: 2rem; margin-bottom: 1rem; }
-        .lp-feature-title { font-size: 15px; font-weight: 800; color: #fff; margin-bottom: 0.5rem; }
-        .lp-feature-desc { font-size: 13.5px; color: rgba(255,255,255,0.55); line-height: 1.65; }
+        .lp-feature-card:hover { background: rgba(74,222,128,0.05); border-color: rgba(74,222,128,0.25); transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.3); }
+        .lp-feature-icon {
+          width: 44px;
+          height: 44px;
+          border-radius: 10px;
+          background: rgba(74, 222, 128, 0.1);
+          border: 1px solid rgba(74, 222, 128, 0.2);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 1.25rem;
+        }
+        .lp-feature-title { font-size: 16px; font-weight: 800; color: #fff; margin-bottom: 0.5rem; }
+        .lp-feature-desc { font-size: 13.5px; color: rgba(255,255,255,0.6); line-height: 1.65; }
 
         /* ── CTA Banner ── */
         .lp-cta-banner {
-          background: linear-gradient(135deg, #052e16, #14532d, #052e16);
-          border: 1px solid rgba(74,222,128,0.2); border-radius: 20px;
+          background: #0d381b;
+          border: 1px solid rgba(74,222,128,0.22);
+          border-radius: 20px;
           padding: 3.5rem 3rem; text-align: center; position: relative; overflow: hidden;
         }
         .lp-cta-banner::before {
@@ -229,27 +286,30 @@ export default function LandingPage() {
           pointer-events: none;
         }
         .lp-cta-banner-title { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 900; color: #fff; margin-bottom: 0.75rem; letter-spacing: -0.5px; }
-        .lp-cta-banner-desc { color: rgba(255,255,255,0.6); font-size: 1rem; margin-bottom: 2rem; }
+        .lp-cta-banner-desc { color: rgba(255,255,255,0.65); font-size: 1rem; margin-bottom: 2rem; }
         .lp-cta-banner-btn {
           display: inline-flex; align-items: center; gap: 8px;
-          padding: 14px 36px; background: linear-gradient(135deg, #15803d, #22c55e);
-          color: #fff; border-radius: 10px; font-weight: 800; font-size: 15px;
-          text-decoration: none; transition: all 0.2s;
-          box-shadow: 0 6px 24px rgba(34,197,94,0.35);
+          padding: 13px 32px;
+          background: #16a34a;
+          color: #fff; border-radius: 10px; font-weight: 700; font-size: 15px;
+          text-decoration: none; transition: background 0.2s, transform 0.15s;
         }
-        .lp-cta-banner-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(34,197,94,0.5); }
+        .lp-cta-banner-btn:hover {
+          background: #15803d;
+          transform: translateY(-1px);
+        }
 
         /* ── Footer ── */
         .lp-footer { border-top: 1px solid rgba(255,255,255,0.07); padding: 2rem clamp(1.5rem, 5vw, 4rem); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
         .lp-footer-brand { display: flex; align-items: center; gap: 8px; }
         .lp-footer-brand img { height: 28px; }
-        .lp-footer-copy { font-size: 12px; color: rgba(255,255,255,0.35); }
-        .lp-footer-right { font-size: 12px; color: rgba(255,255,255,0.35); }
+        .lp-footer-copy { font-size: 12px; color: rgba(255,255,255,0.4); }
+        .lp-footer-right { font-size: 12px; color: rgba(255,255,255,0.4); }
 
         @media (max-width: 640px) {
           .lp-nav-links { gap: 1rem; }
-          .stat-card { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.07); }
-          .stat-card:last-child { border-bottom: none; }
+          .lp-stat-card { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.07); }
+          .lp-stat-card:last-child { border-bottom: none; }
           .lp-cta-banner { padding: 2.5rem 1.5rem; }
           .lp-footer { justify-content: center; text-align: center; }
         }
@@ -264,7 +324,9 @@ export default function LandingPage() {
         <div className="lp-nav-links">
           <a className="lp-nav-link" href="#fitur">Fitur</a>
           <a className="lp-nav-link" href="#tentang">Tentang</a>
-          <Link className="lp-btn-masuk" href="/login">Masuk →</Link>
+          <Link className="lp-btn-masuk" href="/login">
+            Masuk <ArrowRight size={15} />
+          </Link>
         </div>
       </nav>
 
@@ -289,7 +351,7 @@ export default function LandingPage() {
           </p>
           <div className="lp-hero-cta">
             <Link className="lp-cta-primary" href="/login">
-              🔐 Masuk ke Sistem
+              <LogIn size={18} /> Masuk ke Sistem
             </Link>
             <a className="lp-cta-secondary" href="#fitur">
               Pelajari Lebih Lanjut
@@ -311,7 +373,6 @@ export default function LandingPage() {
 
       {/* ── Features ── */}
       <section className="lp-section" id="fitur">
-        <div className="lp-section-badge">✦ Kemampuan Sistem</div>
         <h2 className="lp-section-title">Fitur Unggulan SiPantau</h2>
         <p className="lp-section-desc">
           Dirancang khusus untuk kebutuhan penegakan hukum kehutanan dengan teknologi scraping
@@ -332,29 +393,36 @@ export default function LandingPage() {
 
       {/* ── About ── */}
       <section className="lp-section" id="tentang">
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem', alignItems: 'center' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '3.5rem', alignItems: 'center' }}>
           <div>
-            <div className="lp-section-badge">✦ Tentang SiPantau</div>
             <h2 className="lp-section-title">Melindungi Hutan Indonesia dari Ancaman Digital</h2>
-            <p style={{ color: 'rgba(255,255,255,0.6)', lineHeight: 1.8, fontSize: '0.95rem', marginTop: '1rem' }}>
+            <p style={{ color: 'rgba(255,255,255,0.65)', lineHeight: 1.8, fontSize: '0.95rem', marginTop: '1rem' }}>
               SiPantau hadir sebagai solusi teknologi untuk membantu petugas penegak hukum kehutanan
               dalam mengawasi aktivitas perdagangan ilegal komoditas kehutanan yang semakin marak
               terjadi di berbagai platform e-commerce.
             </p>
-            <p style={{ color: 'rgba(255,255,255,0.6)', lineHeight: 1.8, fontSize: '0.95rem', marginTop: '1rem' }}>
+            <p style={{ color: 'rgba(255,255,255,0.65)', lineHeight: 1.8, fontSize: '0.95rem', marginTop: '1rem' }}>
               Dengan sistem pemantauan otomatis, tim dapat fokus pada analisis dan tindak lanjut,
               bukan pada pengumpulan data manual yang menyita waktu.
             </p>
             <div style={{ display: 'flex', gap: '2rem', marginTop: '2rem' }}>
-              {[['Tokopedia', '✅ Aktif'], ['Kategori Ilegal', '50+'], ['Update', 'Real-time']].map(([k, v]) => (
-                <div key={k}>
-                  <div style={{ fontSize: '14px', fontWeight: 800, color: '#4ade80' }}>{v}</div>
-                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>{k}</div>
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: 800, color: '#4ade80', display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <CheckCircle2 size={15} color="#4ade80" /> Aktif
                 </div>
-              ))}
+                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>Tokopedia</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: 800, color: '#4ade80' }}>50+</div>
+                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>Kategori Ilegal</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: 800, color: '#4ade80' }}>Real-time</div>
+                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>Pembaruan Data</div>
+              </div>
             </div>
           </div>
-          <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             {[
               { step: '01', label: 'Input Kata Kunci', desc: 'Masukkan kata kunci produk yang ingin dipantau.' },
               { step: '02', label: 'Scraping Otomatis', desc: 'Agent memantau ribuan listing secara otomatis.' },
@@ -362,10 +430,10 @@ export default function LandingPage() {
               { step: '04', label: 'Laporan & Tindak Lanjut', desc: 'Ekspor data dan ambil tindakan yang diperlukan.' },
             ].map(({ step, label, desc }) => (
               <div key={step} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                <div style={{ flexShrink: 0, width: 36, height: 36, borderRadius: 10, background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 800, color: '#4ade80' }}>{step}</div>
+                <div style={{ flexShrink: 0, width: 36, height: 36, borderRadius: 10, background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 800, color: '#4ade80' }}>{step}</div>
                 <div>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff', marginBottom: 2 }}>{label}</div>
-                  <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)' }}>{desc}</div>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#fff', marginBottom: 2 }}>{label}</div>
+                  <div style={{ fontSize: '12.5px', color: 'rgba(255,255,255,0.5)' }}>{desc}</div>
                 </div>
               </div>
             ))}
@@ -379,7 +447,7 @@ export default function LandingPage() {
           <div className="lp-cta-banner-title">Siap Mulai Pemantauan?</div>
           <p className="lp-cta-banner-desc">Masuk ke sistem dan mulai pantau aktivitas perdagangan ilegal sekarang.</p>
           <Link className="lp-cta-banner-btn" href="/login">
-            🔐 Masuk ke SiPantau
+            <LogIn size={18} /> Masuk ke SiPantau
           </Link>
         </div>
       </div>
