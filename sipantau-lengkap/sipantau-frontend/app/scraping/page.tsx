@@ -563,7 +563,15 @@ export default function ScrapingPage() {
                   <button
                     onClick={async () => {
                       try {
-                        const res = await apiFetch(`/api/export/download/${fileExcel}`);
+                        // Ambil keyword dan session_id dari fileExcel nama file
+                        // Format: hasil_scraping_{keyword}_{tanggal}_{session_id}.xlsx
+                        const parts = fileExcel.replace('.xlsx','').split('_');
+                        const sessionId = parts[parts.length - 1];
+                        const res = await apiFetch(`/api/export`, {
+                          method: "POST",
+                          body: JSON.stringify({ session_id: sessionId, keyword })
+                        });
+                        if (!res.ok) throw new Error("Gagal generate file");
                         const blob = await res.blob();
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement("a");
@@ -598,7 +606,8 @@ export default function ScrapingPage() {
                 </thead>
                 <tbody>
                   {results.map((r, i) => {
-                    const isExpensive = r.harga >= parseInt(hargaThreshold);
+                    const threshold = parseInt(hargaThreshold) || 0;
+                    const isExpensive = threshold > 0 && r.harga >= 1000000;
                     return (
                     <tr key={i} style={isExpensive ? { background: "rgba(255, 0, 0, 0.05)" } : {}}>
                       <td className="td-g" style={{ paddingLeft: "1.15rem" }}>{i + 1}</td>
