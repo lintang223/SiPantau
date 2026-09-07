@@ -1,4 +1,5 @@
 import os
+import io
 from datetime import datetime, timedelta
 from fastapi import HTTPException
 from database import get_conn
@@ -144,3 +145,54 @@ def export_to_excel_file(results, keyword, session_id, harga_threshold=350000):
     ws.freeze_panes = "A5"
     wb.save(filepath)
     return filename
+
+def export_to_excel_buffer(results, keyword="", session_id="", harga_threshold=350000):
+    tanggal  = datetime.now().strftime("%Y-%m-%d")
+    wb       = openpyxl.Workbook()
+    ws       = wb.active
+    ws.title = "Data Scraping"
+
+    ws.merge_cells("A1:H1")
+    ws["A1"] = "KEMENTERIAN KEHUTANAN REPUBLIK INDONESIA"
+    ws["A1"].font      = Font(bold=True, size=13, color="FFFFFF")
+    ws["A1"].fill      = PatternFill("solid", fgColor="1B4332")
+    ws["A1"].alignment = Alignment(horizontal="center", vertical="center")
+    ws.row_dimensions[1].height = 30
+
+    ws.merge_cells("A2:H2")
+    ws["A2"] = f"SiPantau — Hasil Scraping: '{keyword or 'Semua'}' | Tanggal: {tanggal}"
+    ws["A2"].font      = Font(bold=True, size=11, color="1B4332")
+    ws["A2"].fill      = PatternFill("solid", fgColor="D8F3DC")
+    ws["A2"].alignment = Alignment(horizontal="center", vertical="center")
+    ws.row_dimensions[2].height = 22
+
+    headers = ["No","Nama Produk","Harga (Rp)","Platform","Rating","Terjual","URL Produk","Waktu Scrape"]
+    for col, h in enumerate(headers, 1):
+        cell           = ws.cell(row=4, column=col, value=h)
+        cell.font      = Font(bold=True, color="FFFFFF", size=10)
+        cell.fill      = PatternFill("solid", fgColor="2D6A4F")
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+    ws.row_dimensions[4].height = 20
+
+    for i, r in enumerate(results):
+        row    = 5 + i
+        is_exp = (r.get("harga") or 0) >= 1000000
+        fill   = PatternFill("solid", fgColor="FFCCCC") if is_exp else PatternFill("solid", fgColor="F0F7F4" if i%2==0 else "FFFFFF")
+        data   = [i+1, r.get("nama_produk",""), r.get("harga",0), r.get("platform",""),
+                  r.get("rating",0), r.get("terjual",""), r.get("url_produk",""), r.get("waktu_scrape","")]
+        for col, val in enumerate(data, 1):
+            cell      = ws.cell(row=row, column=col, value=val)
+            cell.fill = fill
+            cell.font = Font(size=9, color="990000" if is_exp else "000000")
+            if col == 3: cell.number_format = "#,##0"; cell.alignment = Alignment(horizontal="right")
+            elif col == 5: cell.number_format = "0.0"
+
+    for i, w in enumerate([6,45,18,15,10,12,50,22], 1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+    ws.freeze_panes = "A5"
+
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+    return output
+

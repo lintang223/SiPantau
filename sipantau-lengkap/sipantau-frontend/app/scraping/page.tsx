@@ -259,7 +259,7 @@ export default function ScrapingPage() {
                   setFileExcel(resultData.file_excel);
                 }
                 // Simpan session_id dari job_id agar bisa dipakai saat download
-                setSessionId(resultData.session_id || plat_job_id || "");
+                setSessionId(resultData.session_id || jobId || "");
                 
                 const mapped: Produk[] = (resultData.results || []).map((r: Record<string, unknown>) => ({
                   nama:     r.nama_produk  as string,
