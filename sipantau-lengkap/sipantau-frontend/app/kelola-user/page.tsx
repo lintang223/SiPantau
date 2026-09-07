@@ -35,12 +35,12 @@ function ConfirmModal({ username, onConfirm, onCancel }: { username: string; onC
             <div style={{ width: 38, height: 38, borderRadius: 10, background: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Trash2 size={18} color="#dc2626" />
             </div>
-            <div style={{ fontWeight: 800, fontSize: '1rem', color: '#1a1a1a' }}>Hapus User</div>
+            <div style={{ fontWeight: 800, fontSize: '1rem', color: '#ffffff' }}>Hapus User</div>
           </div>
           <button onClick={onCancel} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af' }}><X size={18} /></button>
         </div>
-        <p style={{ fontSize: '.88rem', color: '#374151', lineHeight: 1.6, marginBottom: '1.5rem' }}>
-          Yakin ingin menonaktifkan user <strong>@{username}</strong>? (Soft Delete)
+        <p style={{ fontSize: '.88rem', color: '#ffffff', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+          Yakin ingin menonaktifkan user <strong>@{username}</strong>?
         </p>
         <div style={{ display: 'flex', gap: '.75rem', justifyContent: 'flex-end' }}>
           <button onClick={onCancel} style={{
