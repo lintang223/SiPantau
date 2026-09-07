@@ -11,7 +11,7 @@ export default function PengaturanPage() {
   const router = useRouter();
   useEffect(() => {
     if (!localStorage.getItem("sipantau_auth")) {
-      router.push("/");
+      router.push("/login");
       return;
     }
     const userStr = localStorage.getItem("sipantau_user");

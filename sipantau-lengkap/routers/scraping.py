@@ -1,6 +1,7 @@
 import os
+import io
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import StreamingResponse
 import pandas as pd
 from psycopg2.extras import RealDictCursor
 
@@ -43,22 +44,33 @@ def get_scraped_urls():
 @router.post("/export")
 def export_excel(req: ExportRequest, current_user: dict = Depends(get_current_user)):
     from database import get_pool
-    # Gunakan koneksi psycopg2 asli (bukan DictConnectionWrapper) agar kompatibel dengan pd.read_sql
     conn_raw = get_pool().getconn()
     try:
-        df = pd.read_sql(
-            "SELECT * FROM hasil_scraping WHERE session_id = %s",
-            conn_raw,
-            params=(req.session_id,)
-        )
+        query = "SELECT * FROM hasil_scraping"
+        params = []
+        if req.session_id:
+            query += " WHERE session_id = %s"
+            params.append(req.session_id)
+        elif req.keyword:
+            query += " WHERE keyword = %s"
+            params.append(req.keyword)
+        
+        df = pd.read_sql(query, conn_raw, params=tuple(params))
     finally:
         get_pool().putconn(conn_raw)
+        
     if df.empty:
         raise HTTPException(status_code=404, detail="Data tidak ditemukan")
-    filename = export_to_excel_file(df.to_dict("records"), req.keyword, req.session_id)
-    return FileResponse(
-        path=f"exports/{filename}", filename=filename,
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='Hasil Scraping')
+    output.seek(0)
+    
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename=export_{req.keyword or 'data'}.xlsx"}
     )
 
 @router.get("/export/download/{filename}")

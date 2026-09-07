@@ -22,7 +22,7 @@ export default function ScrapingPage() {
   const [username, setUsername] = useState("");
 
   useEffect(() => {
-    if (!localStorage.getItem("sipantau_auth")) { router.push("/"); return; }
+    if (!localStorage.getItem("sipantau_auth")) { router.push("/login"); return; }
     const userData = localStorage.getItem("sipantau_user");
     if (userData) setUsername(JSON.parse(userData).username);
   }, [router]);
@@ -38,6 +38,7 @@ export default function ScrapingPage() {
   const [done, setDone]           = useState(false);
   const [prog, setProg]           = useState({ tokopedia: 0 });
   const [fileExcel, setFileExcel] = useState("");
+  const [sessionId, setSessionId] = useState("");
   const [agentJobId, setAgentJobId] = useState("");
   const [agentActive, setAgentActive] = useState(false);
   const [browserReady, setBrowserReady] = useState(false);
@@ -60,6 +61,7 @@ export default function ScrapingPage() {
         if (s.log)       setLog(s.log);
         if (s.prog)      setProg(s.prog);
         if (s.fileExcel) setFileExcel(s.fileExcel);
+        if (s.sessionId) setSessionId(s.sessionId);
         if (s.agentJobId) setAgentJobId(s.agentJobId);
       }
     } catch { /* ignore */ }
@@ -70,9 +72,9 @@ export default function ScrapingPage() {
   useEffect(() => {
     if (!hydrated) return;
     localStorage.setItem("sipantau_scrape_state", JSON.stringify({
-      keyword, loading, done, results, log, prog, fileExcel, agentJobId
+      keyword, loading, done, results, log, prog, fileExcel, sessionId, agentJobId
     }));
-  }, [hydrated, keyword, loading, done, results, log, prog, fileExcel, agentJobId]);
+  }, [hydrated, keyword, loading, done, results, log, prog, fileExcel, sessionId, agentJobId]);
 
   useEffect(() => {
     // Cek status agent setiap 3 detik
@@ -256,6 +258,8 @@ export default function ScrapingPage() {
                   addLog(`📁 File Excel lokal: ${resultData.file_excel}`, "info");
                   setFileExcel(resultData.file_excel);
                 }
+                // Simpan session_id dari job_id agar bisa dipakai saat download
+                setSessionId(resultData.session_id || plat_job_id || "");
                 
                 const mapped: Produk[] = (resultData.results || []).map((r: Record<string, unknown>) => ({
                   nama:     r.nama_produk  as string,
@@ -563,24 +567,24 @@ export default function ScrapingPage() {
                   <button
                     onClick={async () => {
                       try {
-                        // Ambil keyword dan session_id dari fileExcel nama file
-                        // Format: hasil_scraping_{keyword}_{tanggal}_{session_id}.xlsx
-                        const parts = fileExcel.replace('.xlsx','').split('_');
-                        const sessionId = parts[parts.length - 1];
                         const res = await apiFetch(`/api/export`, {
                           method: "POST",
-                          body: JSON.stringify({ session_id: sessionId, keyword })
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ keyword, session_id: sessionId || undefined })
                         });
-                        if (!res.ok) throw new Error("Gagal generate file");
+                        if (!res.ok) {
+                          const err = await res.json().catch(() => ({}));
+                          throw new Error(err.detail || "Gagal generate file");
+                        }
                         const blob = await res.blob();
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement("a");
                         a.href = url;
-                        a.download = fileExcel;
+                        a.download = `sipantau_${keyword}.xlsx`;
                         a.click();
                         URL.revokeObjectURL(url);
-                      } catch {
-                        alert("Gagal mengunduh file dari server.");
+                      } catch (e: any) {
+                        alert(`Gagal mengunduh file: ${e.message}`);
                       }
                     }}
                     className="btn-sm"

@@ -22,7 +22,7 @@ export default function RiwayatPage() {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!localStorage.getItem("sipantau_auth")) { router.push("/"); return; }
+    if (!localStorage.getItem("sipantau_auth")) { router.push("/login"); return; }
     const d = localStorage.getItem("sipantau_user");
     if (d) setUser(JSON.parse(d));
   }, [router]);

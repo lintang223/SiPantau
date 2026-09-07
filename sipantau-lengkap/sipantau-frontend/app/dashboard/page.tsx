@@ -17,9 +17,9 @@ export default function DashboardPage() {
   const [mounted, setMounted]   = useState(false);
 
   useEffect(() => {
-    if (!localStorage.getItem("sipantau_auth")) { router.replace("/"); return; }
+    if (!localStorage.getItem("sipantau_auth")) { router.replace("/login"); return; }
     const d = localStorage.getItem("sipantau_user");
-    if (!d) { router.replace("/"); return; }
+    if (!d) { router.replace("/login"); return; }
     const u: UserSession = JSON.parse(d);
     setUser(u); setMounted(true);
 

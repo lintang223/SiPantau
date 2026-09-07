@@ -28,7 +28,7 @@ export function middleware(request: NextRequest) {
   const tokenCookie = request.cookies.get('sipantau_auth')
   if (!tokenCookie?.value) {
     const url = request.nextUrl.clone()
-    url.pathname = '/'
+    url.pathname = '/login'
     url.searchParams.set('redirect', pathname)
     return NextResponse.redirect(url)
   }

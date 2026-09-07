@@ -34,7 +34,7 @@ export function logout() {
   if (typeof document !== "undefined") {
     document.cookie = "sipantau_auth=; path=/; max-age=0";
   }
-  if (typeof window !== "undefined") window.location.href = "/";
+  if (typeof window !== "undefined") window.location.href = "/login";
 }
 
 /**
