@@ -131,53 +131,26 @@ async def scroll_and_extract(page, keyword: str, seen_links: set) -> list[dict]:
             let results = new Map();
             let lastHeight = document.body.scrollHeight;
             let noChangeCount = 0;
-            let lastScrollY = -1;
-            let sameScrollCount = 0;
-            let totalTicks = 0;
-            let skeletonTicks = 0;
+            // 15 tick × 60ms = 900ms menunggu sebelum menyerah (Fast Mode)
+            const MAX_NO_CHANGE = 15;
             
-            // Batas maksimal: 100 tick × 60ms = 6 detik maksimal per putaran
-            const MAX_TOTAL_TICKS = 100;
-            const MAX_NO_CHANGE = 12;
-
             function isLoading() {
+                // Deteksi apakah Tokopedia sedang memuat konten baru
                 const skeletons = document.querySelectorAll(
                     "[data-testid='skeleton-pdp'], [class*='Skeleton'], [class*='skeleton'], " +
                     "[class*='shimmer'], [class*='Shimmer'], [class*='loading-more'], " +
                     "[aria-label='loading'], [role='progressbar']"
                 );
-                if (skeletons.length > 0) {
-                    skeletonTicks++;
-                    return skeletonTicks < 10; // abaikan jika sudah 10 tick agar tidak stuck
-                }
-                skeletonTicks = 0;
-                return false;
+                return skeletons.length > 0;
             }
 
             let timer = setInterval(() => {
-                totalTicks++;
-
-                // Safety Exit: Maksimal 6 detik langsung selesaikan
-                if (totalTicks >= MAX_TOTAL_TICKS) {
-                    clearInterval(timer);
-                    resolve(Array.from(results.values()));
-                    return;
-                }
-
-                window.scrollBy({top: 160, behavior: 'instant'});
-
-                // Deteksi pergerakan scroll fisik
-                if (Math.abs(window.scrollY - lastScrollY) < 3) {
-                    sameScrollCount++;
-                } else {
-                    sameScrollCount = 0;
-                    lastScrollY = window.scrollY;
-                }
-
+                window.scrollBy({top: 150, behavior: 'instant'});
+                
                 let cards = Array.from(document.querySelectorAll("div[data-testid='master-product-card']"));
                 if (cards.length === 0) cards = Array.from(document.querySelectorAll("div.css-llwpbs"));
                 if (cards.length === 0) cards = Array.from(document.querySelectorAll("div.css-5wh65g"));
-                if (cards.length === 0) cards = Array.from(document.querySelectorAll("div[class*='product-card']"));
+
 
                 for (let card of cards) {
                     try {
@@ -224,17 +197,16 @@ async def scroll_and_extract(page, keyword: str, seen_links: set) -> list[dict]:
 
                 let currentScroll = window.scrollY + window.innerHeight;
                 let currentHeight = document.body.scrollHeight;
-                let isAtBottom = (currentScroll >= currentHeight - 120) || (sameScrollCount >= 10);
-
-                if (isAtBottom) {
-                    if (currentHeight === lastHeight || sameScrollCount >= 8) {
+                
+                if (currentScroll >= currentHeight - 100) {
+                    if (currentHeight === lastHeight) {
+                        // Jangan hitung sebagai "mentok" jika masih loading
                         if (!isLoading()) {
                             noChangeCount++;
                         }
-                        if (noChangeCount >= MAX_NO_CHANGE || sameScrollCount >= 12) {
+                        if (noChangeCount >= MAX_NO_CHANGE) { // 50 × 80ms = 4000ms
                             clearInterval(timer);
                             resolve(Array.from(results.values()));
-                            return;
                         }
                     } else {
                         lastHeight = currentHeight;
@@ -243,43 +215,14 @@ async def scroll_and_extract(page, keyword: str, seen_links: set) -> list[dict]:
                 } else {
                     noChangeCount = 0;
                 }
-            }, 60);
+            }, 60); // 60ms interval (cukup responsif)
         });
     }
     """
     
     scraped_data = []
     try:
-        scraped_data = await asyncio.wait_for(page.evaluate(js_code), timeout=10.0)
-    except asyncio.TimeoutError:
-        print("      ⚠️ [Scroll timeout 10s — mengekstrak produk yang ada...]")
-        try:
-            fallback_js = """
-            () => {
-                let res = [];
-                let cards = Array.from(document.querySelectorAll("div[data-testid='master-product-card'], div.css-llwpbs, div.css-5wh65g"));
-                for (let card of cards) {
-                    let linkEl = card.querySelector("a[href*='tokopedia.com']");
-                    let link = linkEl ? (linkEl.getAttribute("href") || "").split("?")[0] : "";
-                    if (link) {
-                        let titleEl = card.querySelector("[data-testid='spnSRPProdName']");
-                        let priceEl = card.querySelector("[data-testid='spnSRPProdPrice']");
-                        res.push({
-                            title: titleEl ? titleEl.innerText.trim() : "N/A",
-                            price: priceEl ? priceEl.innerText.trim() : "",
-                            rating: "N/A",
-                            sold: "N/A",
-                            shop: "N/A",
-                            link: link
-                        });
-                    }
-                }
-                return res;
-            }
-            """
-            scraped_data = await page.evaluate(fallback_js)
-        except Exception:
-            scraped_data = []
+        scraped_data = await page.evaluate(js_code)
     except Exception as e:
         print(f"      [scroll/extract error: {e}]")
 
