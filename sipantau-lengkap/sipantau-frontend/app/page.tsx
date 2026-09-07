@@ -170,14 +170,6 @@ export default function LandingPage() {
           animation: hero-in 0.8s cubic-bezier(0.22,1,0.36,1) both;
         }
         @keyframes hero-in { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
-        .lp-hero-badge {
-          display: inline-flex; align-items: center; gap: 7px;
-          background: rgba(74,222,128,0.12); border: 1px solid rgba(74,222,128,0.3);
-          padding: 6px 14px; border-radius: 99px; font-size: 12px; font-weight: 700;
-          color: #4ade80; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 1.5rem;
-        }
-        .lp-hero-badge::before { content: ''; display: block; width: 7px; height: 7px; border-radius: 50%; background: #4ade80; animation: pulse-dot 2s ease-in-out infinite; }
-        @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.85)} }
         .lp-hero-title {
           font-size: clamp(2.4rem, 6vw, 4rem); font-weight: 900; line-height: 1.1;
           letter-spacing: -1.5px; margin-bottom: 1.25rem; color: #fff;
@@ -336,9 +328,6 @@ export default function LandingPage() {
         <div className="lp-hero-overlay" />
         <div className="lp-hero-overlay2" />
         <div className="lp-hero-content">
-          <div className="lp-hero-badge">
-            Kementerian Kehutanan RI
-          </div>
           <h1 className="lp-hero-title">
             Sistem Pantau<br />
             <em>Perdagangan Ilegal</em><br />
