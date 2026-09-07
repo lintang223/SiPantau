@@ -249,7 +249,10 @@ async def scroll_and_extract(page, keyword: str, seen_links: set) -> list[dict]:
 # ══════════════════════════════════════════
 async def click_load_more(page) -> bool:
     # Scroll ke paling bawah dulu agar tombol muncul di viewport
-    await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+    try:
+        await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+    except Exception:
+        return False  # Page sedang navigasi, lewati saja
     await asyncio.sleep(random.uniform(0.7, 1.2))
 
     try:
@@ -341,10 +344,13 @@ async def scrape_all_pages(
             re.IGNORECASE
         )
         async def _block_search_res(route):
-            if _SEARCH_BLOCK.search(route.request.url):
-                await route.abort()
-            else:
-                await route.continue_()
+            try:
+                if _SEARCH_BLOCK.search(route.request.url):
+                    await route.abort()
+                else:
+                    await route.continue_()
+            except Exception:
+                pass  # Page/context sudah tertutup, abaikan error route
         await page.route("**/*", _block_search_res)
 
     await asyncio.sleep(1.5)
