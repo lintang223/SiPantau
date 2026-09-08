@@ -162,12 +162,6 @@ export default function LoginPage() {
         }
         @keyframes card-in { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
 
-        .login-card-top-bar {
-          height: 4px;
-          background: #16a34a;
-          width: 100%;
-        }
-
         .login-card-body {
           padding: 32px 32px 28px;
         }
@@ -185,14 +179,11 @@ export default function LoginPage() {
           height: 44px; width: auto; object-fit: contain;
         }
         .login-brand-title {
-          font-size: 21px; font-weight: 900; color: #0f172a;
+          font-size: 22px; font-weight: 900; color: #0f172a;
           letter-spacing: -0.5px; line-height: 1.1;
         }
         .login-brand-title span {
           color: #16a34a;
-        }
-        .login-brand-sub {
-          font-size: 11px; color: #64748b; font-weight: 600; margin-top: 3px;
         }
         .login-back-btn {
           display: inline-flex; align-items: center; gap: 4px;
@@ -276,17 +267,13 @@ export default function LoginPage() {
       <div className="login-root">
         <div className="login-overlay" />
         <div className="login-card">
-          <div className="login-card-top-bar" />
           <div className="login-card-body">
             
             {/* ── Brand Row (Logo + SiPantau Side by Side) ── */}
             <div className="login-header">
               <div className="login-brand-wrap">
                 <img src="/logo.png" alt="Logo Kemenhut & Gakkum" className="login-logo-img" />
-                <div>
-                  <div className="login-brand-title">Si<span>Pantau</span></div>
-                  <div className="login-brand-sub">Kementerian Kehutanan RI</div>
-                </div>
+                <div className="login-brand-title">Si<span>Pantau</span></div>
               </div>
               <Link href="/" className="login-back-btn" title="Kembali ke Beranda">
                 <ArrowLeft size={14} /> Beranda
