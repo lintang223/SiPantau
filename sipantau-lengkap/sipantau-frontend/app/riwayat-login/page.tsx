@@ -54,10 +54,44 @@ export default function RiwayatLoginPage() {
       .catch(() => setLoading(false))
   }
 
-  const filteredLogs = logs.filter(l =>
-    l.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (l.ip_address || '').toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const parseUserAgent = (ua: string) => {
+    if (!ua) return { browser: 'Tidak diketahui', os: '-' }
+
+    let browser = 'Browser Lain'
+    let os = 'OS Lain'
+
+    // Deteksi OS
+    if (/Windows NT 10\.0/i.test(ua)) os = 'Windows 10/11'
+    else if (/Windows NT 6\.3/i.test(ua)) os = 'Windows 8.1'
+    else if (/Windows NT 6\.2/i.test(ua)) os = 'Windows 8'
+    else if (/Windows NT 6\.1/i.test(ua)) os = 'Windows 7'
+    else if (/Windows/i.test(ua)) os = 'Windows'
+    else if (/Android/i.test(ua)) os = 'Android'
+    else if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS'
+    else if (/Macintosh|Mac OS X/i.test(ua)) os = 'macOS'
+    else if (/Linux/i.test(ua)) os = 'Linux'
+
+    // Deteksi Browser (urutan penting: Edge & Opera mengandung string Chrome & Safari)
+    if (/Edg\//i.test(ua)) browser = 'Microsoft Edge'
+    else if (/OPR\/|Opera/i.test(ua)) browser = 'Opera'
+    else if (/Chrome\//i.test(ua)) browser = 'Google Chrome'
+    else if (/Firefox\//i.test(ua)) browser = 'Mozilla Firefox'
+    else if (/Safari\//i.test(ua)) browser = 'Apple Safari'
+
+    return { browser, os }
+  }
+
+  const filteredLogs = logs.filter(l => {
+    const term = searchTerm.toLowerCase()
+    const { browser, os } = parseUserAgent(l.user_agent)
+    return (
+      l.username.toLowerCase().includes(term) ||
+      (l.ip_address || '').toLowerCase().includes(term) ||
+      browser.toLowerCase().includes(term) ||
+      os.toLowerCase().includes(term) ||
+      (l.user_agent || '').toLowerCase().includes(term)
+    )
+  })
 
   const getStatusBadge = (status: string) => {
     if (status === 'success') return <span className="badge-status-aktif"><LogIn size={12}/> Sukses</span>
@@ -148,8 +182,16 @@ export default function RiwayatLoginPage() {
                       <td>{getStatusBadge(log.status)}</td>
                       <td style={{ fontWeight: 700, color: 'var(--ink)' }}>@{log.username}</td>
                       <td><div style={{ display: 'flex', alignItems: 'center', gap: '.3rem' }}><Monitor size={12}/> {log.ip_address}</div></td>
-                      <td style={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={log.user_agent}>
-                        {log.user_agent || '-'}
+                      <td title={log.user_agent}>
+                        {(() => {
+                          const { browser, os } = parseUserAgent(log.user_agent);
+                          return (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                              <span style={{ fontWeight: 600, color: 'var(--ink)' }}>{browser}</span>
+                              <span style={{ fontSize: '.72rem', color: 'var(--ink3)' }}>{os}</span>
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td style={{ color: log.status === 'success' ? '#15803d' : '#dc2626' }}>{log.detail}</td>
                     </tr>
