@@ -22,12 +22,8 @@ def get_client_ip(request: Request) -> str:
     return "unknown"
 
 @router.get("/lockout-status")
-def lockout_status(username: str = ""):
-    if not username:
-        return {"locked": False, "remaining_seconds": 0}
-    username_clean = username.strip().lstrip('@')
-    remaining = get_lockout_remaining(username=username_clean, max_attempts=5, window=300)
-    return {"locked": remaining > 0, "remaining_seconds": remaining}
+def lockout_status(request: Request = None):
+    return {"locked": False, "remaining_seconds": 0}
 
 @router.post("/login")
 def login(req: LoginRequest, request: Request, response: Response):
@@ -40,7 +36,7 @@ def login(req: LoginRequest, request: Request, response: Response):
         raise HTTPException(status_code=400, detail="Password tidak valid")
 
     try:
-        check_rate_limit(username=username_clean, ip=ip)
+        check_rate_limit(ip=ip)
     except HTTPException as e:
         with get_conn() as conn:
             log_login(conn, username_clean, ip, user_agent, "blocked", e.detail)
@@ -59,21 +55,9 @@ def login(req: LoginRequest, request: Request, response: Response):
         with get_conn() as conn:
             log_login(conn, username_clean, ip, user_agent, "failed", detail_msg)
             conn.commit()
-
-        remaining_seconds = get_lockout_remaining(username=username_clean, max_attempts=5, window=300)
-        if remaining_seconds > 0:
-            raise HTTPException(
-                status_code=429,
-                detail=f"Akun '{username_clean}' diblokir sementara karena 5 kali percobaan gagal. Coba lagi dalam {remaining_seconds} detik."
-            )
-        
-        failed_count = count_failed_attempts(username_clean, window=300)
-        sisa = max(0, 5 - failed_count)
-        if sisa > 0:
-            detail_msg += f" (Sisa percobaan: {sisa} kali lagi sebelum akun diblokir)."
         raise HTTPException(status_code=401, detail=detail_msg)
 
-    clear_attempts(username=username_clean, ip=ip)
+    clear_attempts(ip=ip)
     divisi = user.get("divisi") or "balai_gakkum"
     level  = user.get("level") or DIVISI_LEVEL.get(divisi, 3)
     token  = create_token(user["username"], divisi, level)

@@ -65,16 +65,8 @@ def get_lockout_remaining(username: str = "", ip: str = "", max_attempts: int = 
         return max(0, remaining)
     return 0
 
-def check_rate_limit(username: str = "", ip: str = ""):
-    # 1. Proteksi per Akun (5 kali gagal berturut-turut dalam 5 menit)
-    if username:
-        rem_user = get_lockout_remaining(username=username, max_attempts=5, window=300)
-        if rem_user > 0:
-            raise HTTPException(
-                status_code=429,
-                detail=f"Akun '{username}' diblokir sementara karena 5 kali percobaan gagal. Coba lagi dalam {rem_user} detik."
-            )
-    # 2. Proteksi Banjir Jaringan / Bot DoS (30 kali gagal dari IP yang sama dalam 1 menit)
+def check_rate_limit(ip: str = ""):
+    # Proteksi Banjir Jaringan / Bot DoS (30 kali gagal dari IP yang sama dalam 1 menit)
     if ip and ip != "unknown":
         rem_ip = get_lockout_remaining(ip=ip, max_attempts=30, window=60)
         if rem_ip > 0:
@@ -83,15 +75,13 @@ def check_rate_limit(username: str = "", ip: str = ""):
                 detail=f"Terlalu banyak percobaan dari jaringan Anda. Coba lagi dalam {rem_ip} detik."
             )
 
-def clear_attempts(username: str, ip: str = ""):
-    with get_conn() as conn:
-        cur = conn.cursor()
-        if username:
-            cur.execute("UPDATE login_logs SET status = 'failed_cleared' WHERE username = %s AND status = 'failed'", (username,))
-        if ip and ip != "unknown":
+def clear_attempts(ip: str = ""):
+    if ip and ip != "unknown":
+        with get_conn() as conn:
+            cur = conn.cursor()
             cur.execute("UPDATE login_logs SET status = 'failed_cleared' WHERE ip_address = %s AND status = 'failed'", (ip,))
-        conn.commit()
-        cur.close()
+            conn.commit()
+            cur.close()
 
 def validate_input(value: str, field_name: str, max_length: int = 100) -> str:
     if not value or not value.strip():

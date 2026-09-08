@@ -102,8 +102,8 @@ export default function LoginPage() {
           const currentAttempts = parseInt(localStorage.getItem('sipantau_failed_attempts') || '0') + 1
           if (currentAttempts >= 5) {
             localStorage.removeItem('sipantau_failed_attempts')
-            startLockout(120)
-            setError('Terlalu banyak percobaan login gagal di perangkat ini. Coba lagi dalam 120 detik.')
+            startLockout(300)
+            setError('Terlalu banyak percobaan gagal (5 kali). Perangkat ini diblokir sementara selama 5 menit.')
           } else {
             localStorage.setItem('sipantau_failed_attempts', String(currentAttempts))
             setError(data.detail || `Login gagal. Periksa username dan password. (Percobaan ke-${currentAttempts}/5)`)
