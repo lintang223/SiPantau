@@ -37,35 +37,19 @@ export default function LoginPage() {
     setIsChecking(false)
   }, [router])
 
-  // Saat halaman dimuat, cek status blokir ke BACKEND
+  // Saat halaman dimuat, cek apakah browser ini memiliki countdown lockout lokal yang masih aktif
   useEffect(() => {
-    const checkLockout = async () => {
-      try {
-        const res = await fetch(`${API_URL}/api/auth/lockout-status`)
-        const data = await res.json()
-        if (data.locked && data.remaining_seconds > 0) {
-          setError('Akun diblokir sementara.')
-          startCountdown(data.remaining_seconds)
-        } else {
-          localStorage.removeItem(LOCKOUT_KEY)
-        }
-      } catch {
-        const stored = localStorage.getItem(LOCKOUT_KEY)
-        if (stored) {
-          const remaining = Math.ceil((parseInt(stored) - Date.now()) / 1000)
-          if (remaining > 0) {
-            setError('Akun diblokir sementara.')
-            startCountdown(remaining)
-          } else {
-            localStorage.removeItem(LOCKOUT_KEY)
-          }
-        }
+    const stored = localStorage.getItem(LOCKOUT_KEY)
+    if (stored) {
+      const remaining = Math.ceil((parseInt(stored) - Date.now()) / 1000)
+      if (remaining > 0) {
+        setError('Percobaan login diblokir sementara pada perangkat ini.')
+        startCountdown(remaining)
+      } else {
+        localStorage.removeItem(LOCKOUT_KEY)
       }
     }
-    const authFlag = localStorage.getItem('sipantau_auth')
-    if (!authFlag || (typeof window !== 'undefined' && window.location.search.includes('redirect='))) {
-      checkLockout().finally(() => setIsChecking(false))
-    }
+    setIsChecking(false)
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [])
 
@@ -326,7 +310,7 @@ export default function LoginPage() {
               {lockoutSeconds > 0 ? (
                 <div className="error-box" style={{ background: "#fff7ed", borderColor: "#fed7aa", color: "#c2410c" }}>
                   <Lock size={16} />
-                  <span>Akun diblokir sementara. Coba lagi dalam <strong>{lockoutSeconds}</strong> detik.</span>
+                  <span>{error || `Akun diblokir sementara. Coba lagi dalam ${lockoutSeconds} detik.`}</span>
                 </div>
               ) : error ? (
                 <div className="error-box">

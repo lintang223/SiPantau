@@ -5,35 +5,47 @@ import os
 from database import get_conn
 from security import get_current_user, create_token, verify_pw, hash_pw, DIVISI_LEVEL, DIVISI_COLOR, JWT_EXPIRE_HRS, get_accessible_divisi, validate_password_complexity
 from schemas import LoginRequest, ChangePasswordRequest, UpdateProfilRequest, UpdateFotoRequest
-from utils import get_lockout_remaining, check_rate_limit, log_login, clear_attempts, log_user_activity, validate_input
+from utils import get_lockout_remaining, check_rate_limit, log_login, clear_attempts, log_user_activity, validate_input, count_failed_attempts
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 logger = logging.getLogger("sipantau")
 
+def get_client_ip(request: Request) -> str:
+    cf_ip = request.headers.get("CF-Connecting-IP")
+    if cf_ip:
+        return cf_ip.strip()
+    x_forwarded = request.headers.get("X-Forwarded-For")
+    if x_forwarded:
+        return x_forwarded.split(",")[0].strip()
+    if request.client and request.client.host:
+        return request.client.host
+    return "unknown"
+
 @router.get("/lockout-status")
-def lockout_status(request: Request):
-    ip = request.client.host if request.client else "unknown"
-    remaining = get_lockout_remaining(ip)
+def lockout_status(username: str = ""):
+    if not username:
+        return {"locked": False, "remaining_seconds": 0}
+    username_clean = username.strip().lstrip('@')
+    remaining = get_lockout_remaining(username=username_clean, max_attempts=5, window=300)
     return {"locked": remaining > 0, "remaining_seconds": remaining}
 
 @router.post("/login")
 def login(req: LoginRequest, request: Request, response: Response):
-    ip         = request.client.host if request.client else "unknown"
+    ip         = get_client_ip(request)
     user_agent = request.headers.get("User-Agent", "")
-
-    try:
-        check_rate_limit(ip)
-    except HTTPException as e:
-        with get_conn() as conn:
-            log_login(conn, req.username, ip, user_agent, "blocked", "IP diblokir karena terlalu banyak percobaan gagal")
-            conn.commit()
-        raise e
-
     username_clean = req.username.strip().lstrip('@')
     
     validate_input(username_clean, "Username", max_length=50)
     if not (1 <= len(req.password) <= 100):
         raise HTTPException(status_code=400, detail="Password tidak valid")
+
+    try:
+        check_rate_limit(username=username_clean, ip=ip)
+    except HTTPException as e:
+        with get_conn() as conn:
+            log_login(conn, username_clean, ip, user_agent, "blocked", e.detail)
+            conn.commit()
+        raise e
 
     with get_conn() as conn:
         cur = conn.cursor()
@@ -42,18 +54,26 @@ def login(req: LoginRequest, request: Request, response: Response):
         cur.close()
 
     if not user or not verify_pw(req.password, user["password"]):
-        remaining_attempts = 5 - (5 - get_lockout_remaining(ip)) 
         detail_msg = "Username tidak ditemukan atau dinonaktifkan" if not user else "Password salah."
         logger.warning(f"Login gagal untuk username '{username_clean}' dari IP {ip}")
         with get_conn() as conn:
             log_login(conn, username_clean, ip, user_agent, "failed", detail_msg)
             conn.commit()
-        remaining_seconds = get_lockout_remaining(ip)
+
+        remaining_seconds = get_lockout_remaining(username=username_clean, max_attempts=5, window=300)
         if remaining_seconds > 0:
-            raise HTTPException(status_code=429, detail=f"Terlalu banyak percobaan login. Coba lagi dalam {remaining_seconds} detik.")
+            raise HTTPException(
+                status_code=429,
+                detail=f"Akun '{username_clean}' diblokir sementara karena 5 kali percobaan gagal. Coba lagi dalam {remaining_seconds} detik."
+            )
+        
+        failed_count = count_failed_attempts(username_clean, window=300)
+        sisa = max(0, 5 - failed_count)
+        if sisa > 0:
+            detail_msg += f" (Sisa percobaan: {sisa} kali lagi sebelum akun diblokir)."
         raise HTTPException(status_code=401, detail=detail_msg)
 
-    clear_attempts(ip)
+    clear_attempts(username=username_clean, ip=ip)
     divisi = user.get("divisi") or "balai_gakkum"
     level  = user.get("level") or DIVISI_LEVEL.get(divisi, 3)
     token  = create_token(user["username"], divisi, level)
