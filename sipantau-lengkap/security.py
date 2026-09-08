@@ -107,14 +107,14 @@ def validate_password_complexity(password: str, username: str = "") -> str:
 def get_accessible_divisi(conn, user_divisi: str) -> List[str]:
     lvl = DIVISI_LEVEL.get(user_divisi, 99)
     if lvl == 1:
-        return list(DIVISI_LEVEL.keys())
+        return [k for k in DIVISI_LEVEL.keys() if k != "dit_ppsa"]
     cur = conn.cursor()
     cur.execute(
-        "SELECT divisi_target FROM divisi_access WHERE divisi_asal = %s AND can_view = TRUE",
+        "SELECT divisi_target FROM divisi_access WHERE divisi_asal = %s AND can_view = TRUE AND divisi_target != 'dit_ppsa'",
         (user_divisi,)
     )
     result = [r["divisi_target"] for r in cur.fetchall()]
     cur.close()
-    if lvl <= 2 and user_divisi not in result and user_divisi in DIVISI_LEVEL:
+    if lvl <= 2 and user_divisi not in result and user_divisi in DIVISI_LEVEL and user_divisi != "dit_ppsa":
         result.insert(0, user_divisi)
-    return result
+    return list(dict.fromkeys(result))

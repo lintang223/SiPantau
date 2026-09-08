@@ -66,7 +66,7 @@ def get_conn():
 def init_db():
     from security import hash_pw, DIVISI_LEVEL
     
-    DIRECTORATES = ["dit_ppsakk", "dit_ppsa", "dit_p3k", "dit_ppk", "dit_psph"]
+    DIRECTORATES = ["dit_ppsakk", "dit_p3k", "dit_ppk", "dit_psph"]
     BALAI_LIST   = ["balai_gakkum", "gakkum_sumatra", "gakkum_jabalnusra", "gakkum_kalimantan", "gakkum_sulawesi", "gakkum_malupapua"]
     
     DEFAULT_ACCESS = []
@@ -154,6 +154,7 @@ def init_db():
         # Migrasi data dit_ppsa lama ke dit_ppsakk jika ada
         cur.execute("UPDATE users SET divisi='dit_ppsakk' WHERE divisi='dit_ppsa'")
         cur.execute("UPDATE riwayat_session SET divisi='dit_ppsakk' WHERE divisi='dit_ppsa'")
+        cur.execute("DELETE FROM divisi_access WHERE divisi_asal='dit_ppsa' OR divisi_target='dit_ppsa'")
 
         # Seed access rules
         for asal, target in DEFAULT_ACCESS:

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Navbar, { UserSession } from "@/components/Navbar";
 import { FolderOpen, Package, RefreshCw, Download, AlertTriangle } from "lucide-react";
 import { apiFetch, API_URL } from "@/lib/api";
-import { DIVISI_LABEL } from "@/lib/constants";
+import { DIVISI_LABEL, DIVISI_LABEL_SHORT } from "@/lib/constants";
 
 type Riwayat = {
   session_id: string; keyword: string; platforms: string;
@@ -67,27 +67,44 @@ export default function RiwayatPage() {
     }
   };
 
-  const accessible  = user?.accessible_divisi ?? [];
-  const canExport   = user?.can_export !== false;
-  const hasAccess   = accessible.length > 0;
-  const totalProduk = riwayat.reduce((s, r) => s + (r.jumlah_data || 0), 0);
+  const rawAccessible = user?.accessible_divisi ?? [];
+  const accessible    = Array.from(new Set(rawAccessible.filter(d => d !== "dit_ppsa")));
+  const canExport     = user?.can_export !== false;
+  const hasAccess     = accessible.length > 0;
+  const totalProduk   = riwayat.reduce((s, r) => s + (r.jumlah_data || 0), 0);
 
   return (
     <>
       <Navbar />
       <div className="wrap">
-        <div className="phead" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: ".75rem" }}>
-          <div>
+        <div className="phead" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
+          <div style={{ flex: "1 1 auto", minWidth: "260px", maxWidth: "680px" }}>
             <div className="bc">Sipantau / <span>Riwayat</span></div>
             <h1>Riwayat Pemantauan</h1>
-            <p>{filter === "__own__" ? "Sesi pemantauan milikmu" : filter === "__all__" ? "Semua sesi pemantauan" : `Divisi: ${DIVISI_LABEL[filter] || filter}`}</p>
+            <p style={{ wordBreak: "break-word" }}>{filter === "__own__" ? "Sesi pemantauan milikmu" : filter === "__all__" ? "Semua sesi pemantauan" : `Divisi: ${DIVISI_LABEL[filter] || filter}`}</p>
           </div>
-          <div style={{ display: "flex", gap: ".5rem", alignItems: "center", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: ".5rem", alignItems: "center", marginLeft: "auto", flexShrink: 0, flexWrap: "wrap" }}>
             {hasAccess && (
               <select value={filter} onChange={e => setFilter(e.target.value)}
-                style={{ padding: ".35rem .85rem", borderRadius: 999, border: "1.5px solid var(--border)", fontSize: ".78rem", background: "var(--surface)", color: "var(--ink2)", fontFamily: "inherit", outline: "none", cursor: "pointer" }}>
+                style={{
+                  padding: ".45rem .95rem",
+                  borderRadius: 999,
+                  border: "1.5px solid var(--border)",
+                  fontSize: ".82rem",
+                  background: "var(--surface)",
+                  color: "var(--ink2)",
+                  fontFamily: "inherit",
+                  outline: "none",
+                  cursor: "pointer",
+                  maxWidth: "320px",
+                  fontWeight: 600,
+                }}>
                 <option value="__own__">Milik Saya</option>
-                {accessible.map(d => <option key={d} value={d}>{DIVISI_LABEL[d] || d}</option>)}
+                {accessible.map(d => (
+                  <option key={d} value={d} title={DIVISI_LABEL[d] || d}>
+                    {DIVISI_LABEL_SHORT[d] || DIVISI_LABEL[d] || d}
+                  </option>
+                ))}
                 {user?.divisi === "sekditjen" && <option value="__all__">Semua User</option>}
               </select>
             )}
