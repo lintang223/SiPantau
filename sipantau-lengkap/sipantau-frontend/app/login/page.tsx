@@ -95,15 +95,25 @@ export default function LoginPage() {
         if (res.status === 429) {
           const match = (data.detail as string).match(/dalam (\d+) detik/)
           const secs = match ? parseInt(match[1]) : 300
+          localStorage.removeItem('sipantau_failed_attempts')
           startLockout(secs)
           setError(data.detail || 'Terlalu banyak percobaan. Coba lagi nanti.')
         } else {
-          setError(data.detail || 'Login gagal. Periksa username dan password.')
+          const currentAttempts = parseInt(localStorage.getItem('sipantau_failed_attempts') || '0') + 1
+          if (currentAttempts >= 5) {
+            localStorage.removeItem('sipantau_failed_attempts')
+            startLockout(120)
+            setError('Terlalu banyak percobaan login gagal di perangkat ini. Coba lagi dalam 120 detik.')
+          } else {
+            localStorage.setItem('sipantau_failed_attempts', String(currentAttempts))
+            setError(data.detail || `Login gagal. Periksa username dan password. (Percobaan ke-${currentAttempts}/5)`)
+          }
         }
         setLoading(false)
         return
       }
 
+      localStorage.removeItem('sipantau_failed_attempts')
       localStorage.setItem('sipantau_auth', 'true')
       localStorage.setItem('sipantau_user', JSON.stringify(data.user))
       document.cookie = `sipantau_auth=1; path=/; max-age=${30 * 24 * 3600}; SameSite=Lax`
