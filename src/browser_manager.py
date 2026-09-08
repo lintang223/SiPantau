@@ -195,14 +195,28 @@ async def is_page_hanging(page) -> bool:
 
 async def is_blocked(page) -> bool:
     try:
+        # Jika kartu produk sudah terlihat di halaman, berarti pencarian berhasil dan tidak terblokir
+        has_products = await page.query_selector(
+            "[data-testid*='ProductCard'], [data-testid*='product-card'], [data-testid='divSRPProductCard'], div[data-testid='sp-product-card']"
+        )
+        if has_products:
+            return False
+
         title = (await page.title()).lower()
         url   = page.url.lower()
+
+        # Gunakan frasa spesifik untuk mendeteksi bot challenge, BUKAN kata tunggal 'robot'
+        # karena pencarian produk seperti 'mainan robot' mengandung kata robot di title Tokopedia!
         if any(k in title for k in [
-            "captcha","verify","robot","access denied","forbidden","blocked"
+            "captcha", "verify your identity", "are you a robot", "not a robot",
+            "bukan robot", "human verification", "access denied", "403 forbidden",
+            "just a moment...", "security check"
         ]):
             return True
-        if any(k in url for k in ["cf-challenge","captcha","verify","blocked"]):
+
+        if any(k in url for k in ["cf-challenge", "recaptcha", "hcaptcha", "/blocked"]):
             return True
+
         # Shopee-specific: login wall & verify page
         if "shopee.co.id/buyer/login" in url:
             print("   ⛔ Shopee: Redirect ke halaman login terdeteksi")
@@ -210,8 +224,8 @@ async def is_blocked(page) -> bool:
         if "shopee.co.id/verify" in url:
             print("   ⛔ Shopee: Halaman verifikasi terdeteksi")
             return True
-        for sel in ["iframe[src*='captcha']", "#captcha", ".g-recaptcha",
-                    "div[class*='captcha']", "div[class*='verify']"]:
+
+        for sel in ["iframe[src*='captcha']", "iframe[src*='recaptcha']", "#captcha", ".g-recaptcha", ".cf-turnstile"]:
             if await page.query_selector(sel):
                 return True
     except Exception:
