@@ -5,7 +5,7 @@ import os
 from database import get_conn
 from security import get_current_user, create_token, verify_pw, hash_pw, DIVISI_LEVEL, DIVISI_COLOR, JWT_EXPIRE_HRS, get_accessible_divisi, validate_password_complexity
 from schemas import LoginRequest, ChangePasswordRequest, UpdateProfilRequest, UpdateFotoRequest
-from utils import get_lockout_remaining, check_rate_limit, log_login, clear_attempts, log_user_activity, validate_input, count_failed_attempts
+from utils import log_login, log_user_activity, validate_input
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 logger = logging.getLogger("sipantau")
@@ -22,7 +22,7 @@ def get_client_ip(request: Request) -> str:
     return "unknown"
 
 @router.get("/lockout-status")
-def lockout_status(request: Request = None):
+def lockout_status():
     return {"locked": False, "remaining_seconds": 0}
 
 @router.post("/login")
@@ -34,14 +34,6 @@ def login(req: LoginRequest, request: Request, response: Response):
     validate_input(username_clean, "Username", max_length=50)
     if not (1 <= len(req.password) <= 100):
         raise HTTPException(status_code=400, detail="Password tidak valid")
-
-    try:
-        check_rate_limit(ip=ip)
-    except HTTPException as e:
-        with get_conn() as conn:
-            log_login(conn, username_clean, ip, user_agent, "blocked", e.detail)
-            conn.commit()
-        raise e
 
     with get_conn() as conn:
         cur = conn.cursor()
@@ -57,7 +49,6 @@ def login(req: LoginRequest, request: Request, response: Response):
             conn.commit()
         raise HTTPException(status_code=401, detail=detail_msg)
 
-    clear_attempts(ip=ip)
     divisi = user.get("divisi") or "balai_gakkum"
     level  = user.get("level") or DIVISI_LEVEL.get(divisi, 3)
     token  = create_token(user["username"], divisi, level)

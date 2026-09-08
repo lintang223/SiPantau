@@ -27,62 +27,6 @@ def log_login(conn, username: str, ip: str, user_agent: str, status: str, detail
     )
     cur.close()
 
-def count_failed_attempts(username: str, window: int = 300) -> int:
-    cutoff = (datetime.now() - timedelta(seconds=window)).strftime("%Y-%m-%d %H:%M:%S")
-    with get_conn() as conn:
-        cur = conn.cursor()
-        cur.execute(
-            "SELECT COUNT(*) AS c FROM login_logs WHERE username = %s AND status = 'failed' AND attempted_at >= %s",
-            (username, cutoff)
-        )
-        row = cur.fetchone()
-        cur.close()
-    return row["c"] if row else 0
-
-def get_lockout_remaining(username: str = "", ip: str = "", max_attempts: int = 5, window: int = 300) -> int:
-    cutoff = (datetime.now() - timedelta(seconds=window)).strftime("%Y-%m-%d %H:%M:%S")
-    with get_conn() as conn:
-        cur = conn.cursor()
-        if username:
-            cur.execute(
-                "SELECT attempted_at FROM login_logs WHERE username = %s AND status = 'failed' AND attempted_at >= %s ORDER BY attempted_at DESC",
-                (username, cutoff)
-            )
-        elif ip and ip != "unknown":
-            cur.execute(
-                "SELECT attempted_at FROM login_logs WHERE ip_address = %s AND status = 'failed' AND attempted_at >= %s ORDER BY attempted_at DESC",
-                (ip, cutoff)
-            )
-        else:
-            return 0
-        rows = cur.fetchall()
-        cur.close()
-    
-    if len(rows) >= max_attempts:
-        first_attempt = datetime.strptime(rows[-1]["attempted_at"], "%Y-%m-%d %H:%M:%S")
-        elapsed = (datetime.now() - first_attempt).total_seconds()
-        remaining = int(window - elapsed)
-        return max(0, remaining)
-    return 0
-
-def check_rate_limit(ip: str = ""):
-    # Proteksi Banjir Jaringan / Bot DoS (30 kali gagal dari IP yang sama dalam 1 menit)
-    if ip and ip != "unknown":
-        rem_ip = get_lockout_remaining(ip=ip, max_attempts=30, window=60)
-        if rem_ip > 0:
-            raise HTTPException(
-                status_code=429,
-                detail=f"Terlalu banyak percobaan dari jaringan Anda. Coba lagi dalam {rem_ip} detik."
-            )
-
-def clear_attempts(ip: str = ""):
-    if ip and ip != "unknown":
-        with get_conn() as conn:
-            cur = conn.cursor()
-            cur.execute("UPDATE login_logs SET status = 'failed_cleared' WHERE ip_address = %s AND status = 'failed'", (ip,))
-            conn.commit()
-            cur.close()
-
 def validate_input(value: str, field_name: str, max_length: int = 100) -> str:
     if not value or not value.strip():
         raise HTTPException(status_code=400, detail=f"{field_name} tidak boleh kosong")
