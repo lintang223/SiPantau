@@ -5,7 +5,11 @@
 
 export const DIVISI_LABEL: Record<string, string> = {
   sekditjen: 'Setditjen',
-  dit_ppsa:  'Direktorat Pengaduan, Pengawasan dan Sanksi Administrasi',
+  dit_ppsakk: 'Direktorat Pengawasan, Pengenaan Sanksi Administratif dan Keperdataan Kehutanan',
+  dit_ppsa: 'Direktorat Pengawasan, Pengenaan Sanksi Administratif dan Keperdataan Kehutanan',
+  dit_p3k: 'Direktorat Pencegahan dan Penanganan Pengaduan Kehutanan',
+  dit_ppk: 'Direktorat Penindakan Pidana Kehutanan',
+  dit_psph: 'Direktorat Pendayagunaan Sumber Daya dan Pengamanan Hutan',
   gakkum_sumatra: 'Balai Gakkum Sumatra',
   gakkum_jabalnusra: 'Balai Gakkum Jabalnusra (Jawa, Bali, Nusa Tenggara)',
   gakkum_kalimantan: 'Balai Gakkum Kalimantan',
@@ -16,7 +20,11 @@ export const DIVISI_LABEL: Record<string, string> = {
 
 export const DIVISI_LABEL_SHORT: Record<string, string> = {
   sekditjen: 'Setditjen',
-  dit_ppsa:  'Dit. PPSA',
+  dit_ppsakk: 'Dit. PPSAKK',
+  dit_ppsa: 'Dit. PPSAKK',
+  dit_p3k: 'Dit. P3K',
+  dit_ppk: 'Dit. PPK',
+  dit_psph: 'Dit. PSPH',
   gakkum_sumatra: 'Gakkum Sumatra',
   gakkum_jabalnusra: 'Gakkum Jabalnusra',
   gakkum_kalimantan: 'Gakkum Kalimantan',
@@ -27,7 +35,11 @@ export const DIVISI_LABEL_SHORT: Record<string, string> = {
 
 export const DIVISI_COLOR: Record<string, string> = {
   sekditjen: '#7c3aed',
-  dit_ppsa:  '#0d9488',
+  dit_ppsakk: '#0d9488',
+  dit_ppsa: '#0d9488',
+  dit_p3k: '#0284c7',
+  dit_ppk: '#dc2626',
+  dit_psph: '#16a34a',
   gakkum_sumatra: '#2563eb',
   gakkum_jabalnusra: '#0284c7',
   gakkum_kalimantan: '#10b981',
@@ -38,7 +50,10 @@ export const DIVISI_COLOR: Record<string, string> = {
 
 export const DIVISI_OPTIONS = [
   { value: 'sekditjen', label: 'Setditjen' },
-  { value: 'dit_ppsa',  label: 'Dit. PPSA' },
+  { value: 'dit_ppsakk', label: 'Dit. PPSAKK' },
+  { value: 'dit_p3k', label: 'Dit. P3K' },
+  { value: 'dit_ppk', label: 'Dit. PPK' },
+  { value: 'dit_psph', label: 'Dit. PSPH' },
   { value: 'gakkum_sumatra', label: 'Gakkum Sumatra' },
   { value: 'gakkum_jabalnusra', label: 'Gakkum Jabalnusra' },
   { value: 'gakkum_kalimantan', label: 'Gakkum Kalimantan' },
@@ -46,4 +61,3 @@ export const DIVISI_OPTIONS = [
   { value: 'gakkum_malupapua', label: 'Gakkum Malu-Papua' },
   { value: 'balai_gakkum', label: 'Balai Gakkum (General)' },
 ]
-

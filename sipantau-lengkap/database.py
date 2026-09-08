@@ -66,21 +66,16 @@ def get_conn():
 def init_db():
     from security import hash_pw, DIVISI_LEVEL
     
-    DEFAULT_ACCESS = [
-        ("sekditjen", "dit_ppsa"),
-        ("sekditjen", "balai_gakkum"),
-        ("dit_ppsa",  "balai_gakkum"),
-        ("sekditjen", "gakkum_sumatra"),
-        ("sekditjen", "gakkum_jabalnusra"),
-        ("sekditjen", "gakkum_kalimantan"),
-        ("sekditjen", "gakkum_sulawesi"),
-        ("sekditjen", "gakkum_malupapua"),
-        ("dit_ppsa",  "gakkum_sumatra"),
-        ("dit_ppsa",  "gakkum_jabalnusra"),
-        ("dit_ppsa",  "gakkum_kalimantan"),
-        ("dit_ppsa",  "gakkum_sulawesi"),
-        ("dit_ppsa",  "gakkum_malupapua"),
-    ]
+    DIRECTORATES = ["dit_ppsakk", "dit_ppsa", "dit_p3k", "dit_ppk", "dit_psph"]
+    BALAI_LIST   = ["balai_gakkum", "gakkum_sumatra", "gakkum_jabalnusra", "gakkum_kalimantan", "gakkum_sulawesi", "gakkum_malupapua"]
+    
+    DEFAULT_ACCESS = []
+    for d in DIRECTORATES:
+        DEFAULT_ACCESS.append(("sekditjen", d))
+        for b in BALAI_LIST:
+            DEFAULT_ACCESS.append((d, b))
+    for b in BALAI_LIST:
+        DEFAULT_ACCESS.append(("sekditjen", b))
 
     with get_conn() as conn:
         cur = conn.cursor()
@@ -155,6 +150,10 @@ def init_db():
         if cur.fetchone()["c"] > 0:
             cur.execute("ALTER TABLE users DROP COLUMN password_plain")
             logger.info("Kolom password_plain dihapus dari tabel users.")
+
+        # Migrasi data dit_ppsa lama ke dit_ppsakk jika ada
+        cur.execute("UPDATE users SET divisi='dit_ppsakk' WHERE divisi='dit_ppsa'")
+        cur.execute("UPDATE riwayat_session SET divisi='dit_ppsakk' WHERE divisi='dit_ppsa'")
 
         # Seed access rules
         for asal, target in DEFAULT_ACCESS:

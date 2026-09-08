@@ -15,7 +15,11 @@ security = HTTPBearer(auto_error=False)
 
 DIVISI_LEVEL = {
     "sekditjen": 1,
-    "dit_ppsa":  2,
+    "dit_ppsakk": 2,
+    "dit_ppsa": 2,  # alias backward-compatibility
+    "dit_p3k": 2,
+    "dit_ppk": 2,
+    "dit_psph": 2,
     "gakkum_sumatra": 3,
     "gakkum_jabalnusra": 3,
     "gakkum_kalimantan": 3,
@@ -25,7 +29,11 @@ DIVISI_LEVEL = {
 }
 DIVISI_COLOR = {
     "sekditjen": "#7c3aed",
-    "dit_ppsa":  "#0d9488",
+    "dit_ppsakk": "#0d9488",
+    "dit_ppsa": "#0d9488",
+    "dit_p3k": "#0284c7",
+    "dit_ppk": "#dc2626",
+    "dit_psph": "#16a34a",
     "gakkum_sumatra": "#2563eb",
     "gakkum_jabalnusra": "#0284c7",
     "gakkum_kalimantan": "#10b981",

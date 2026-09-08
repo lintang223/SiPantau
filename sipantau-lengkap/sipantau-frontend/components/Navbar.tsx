@@ -60,7 +60,7 @@ export default function Navbar() {
   const canManage   = user?.can_manage_users === true;
   const navItemsFiltered = navItems.filter(item => {
     if (item.text === "Pengaturan") {
-      return user?.divisi === "sekditjen" || user?.divisi === "dit_ppsa";
+      return (user?.level !== undefined && user.level <= 2) || ["sekditjen", "dit_ppsakk", "dit_ppsa", "dit_p3k", "dit_ppk", "dit_psph"].includes(user?.divisi || "");
     }
     return true;
   });

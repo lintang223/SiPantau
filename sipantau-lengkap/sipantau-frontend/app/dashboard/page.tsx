@@ -43,7 +43,7 @@ export default function DashboardPage() {
   ];
 
   const quickLinksFiltered = quickLinks.filter(item => {
-    if (item.label === "Pengaturan") return user?.divisi === "sekditjen" || user?.divisi === "dit_ppsa";
+    if (item.label === "Pengaturan") return (user?.level !== undefined && user.level <= 2) || ["sekditjen", "dit_ppsakk", "dit_ppsa", "dit_p3k", "dit_ppk", "dit_psph"].includes(user?.divisi || "");
     return true;
   });
 

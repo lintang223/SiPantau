@@ -29,7 +29,7 @@ export default function RiwayatAktivitasPage() {
     if (userData) {
       const u = JSON.parse(userData)
       setUser(u)
-      if (u.divisi !== 'sekditjen' && u.divisi !== 'dit_ppsa') {
+      if ((u.level === undefined || u.level > 2) && !['sekditjen', 'dit_ppsakk', 'dit_ppsa', 'dit_p3k', 'dit_ppk', 'dit_psph'].includes(u.divisi)) {
         router.replace('/dashboard')
         return
       }

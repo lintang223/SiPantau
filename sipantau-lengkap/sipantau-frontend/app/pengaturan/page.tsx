@@ -17,7 +17,7 @@ export default function PengaturanPage() {
     const userStr = localStorage.getItem("sipantau_user");
     if (userStr) {
       const user = JSON.parse(userStr);
-      if (user.divisi !== "sekditjen" && user.divisi !== "dit_ppsa") {
+      if ((user.level === undefined || user.level > 2) && !["sekditjen", "dit_ppsakk", "dit_ppsa", "dit_p3k", "dit_ppk", "dit_psph"].includes(user.divisi)) {
         router.push("/akses-ditolak");
       }
     }

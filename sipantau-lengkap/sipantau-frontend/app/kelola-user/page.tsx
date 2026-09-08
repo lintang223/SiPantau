@@ -99,7 +99,7 @@ export default function KelolaUserPage() {
       const res = await apiFetch('/api/users?include_deleted=true')
       const data = await res.json()
       const filtered = data.users.filter((u: User) => [
-        'sekditjen', 'dit_ppsa', 'balai_gakkum',
+        'sekditjen', 'dit_ppsakk', 'dit_ppsa', 'dit_p3k', 'dit_ppk', 'dit_psph', 'balai_gakkum',
         'gakkum_sumatra', 'gakkum_jabalnusra', 'gakkum_kalimantan', 'gakkum_sulawesi', 'gakkum_malupapua'
       ].includes(u.divisi))
       setUsers(filtered)
@@ -170,8 +170,8 @@ export default function KelolaUserPage() {
   }
 
   const getAccessDescription = (divisi: string) => {
-    if (divisi === 'sekditjen')    return "Dapat mengawasi semuanya (Dit. PPSA & Balai Gakkum)";
-    if (divisi === 'dit_ppsa')     return "Dapat melihat data Balai Gakkum";
+    if (divisi === 'sekditjen') return "Dapat mengawasi semuanya (Direktorat & Balai Gakkum)";
+    if (['dit_ppsakk', 'dit_ppsa', 'dit_p3k', 'dit_ppk', 'dit_psph'].includes(divisi)) return "Dapat melihat data Balai Gakkum";
     if (divisi.includes('gakkum')) return "Hanya dapat mengakses data divisinya sendiri";
     return "Akses divisi";
   };
